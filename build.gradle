@@ -1,0 +1,8 @@
+test {
+//	 set heap size for the test JVM(s)
+//	 minHeapSize = "1024m"
+//	 maxHeapSize = "2048m"
+
+//	 set JVM arguments for the test JVM(s)
+//	 jvmArgs '-XX:+HeapDumpOnOutOfMemoryError', '-XX:-UseGCOverheadLimit'
+}
