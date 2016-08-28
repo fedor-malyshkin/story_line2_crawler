@@ -1,6 +1,7 @@
 package ru.nlp_project.story_line2.crawler;
 
-import static com.mongodb.client.model.Filters.*;
+import static com.mongodb.client.model.Filters.and;
+import static com.mongodb.client.model.Filters.eq;
 
 import org.bson.Document;
 import org.slf4j.Logger;
@@ -54,7 +55,7 @@ public class MongoDBClientManager {
 		if (find.first() != null) {
 			String msg =
 					String.format("Record for (%s:%s) already exists in MongoDB.", domain, path);
-			logger.info(msg);
+			logger.debug(msg);
 			// don nothing
 			return;
 		}
@@ -63,8 +64,8 @@ public class MongoDBClientManager {
 		try {
 			collection.insertOne(document);
 			if (logger.isTraceEnabled()) {
-				String msg =
-						String.format("Write record to MongoDB for (%s:%s) - '%s'.", domain, path, json);
+				String msg = String.format("Write record to MongoDB for (%s:%s) - '%s'.", domain,
+						path, json);
 				logger.trace(msg);
 			} else {
 				String msg =

@@ -1,19 +1,10 @@
 package ru.nlp_project.story_line2.crawler;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
-import io.dropwizard.jackson.Jackson;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class CrawlerTest {
 
@@ -23,6 +14,7 @@ public class CrawlerTest {
 	@Before
 	public void setup() throws Exception {
 		// configuration
+		/*
 		Path configDir = Files.createTempDirectory("crawler-config");
 		FileUtils.forceDeleteOnExit(configDir.toFile());
 		FileUtils.copyDirectory(new File("src/test/resources/ru/nlp_project/story_line2/crawler"),
@@ -37,6 +29,7 @@ public class CrawlerTest {
 						CrawlerConfiguration.class);
 		configuration.scriptDir = configDir.toFile().toString();
 		configuration.storageDir = configDir.toFile().toString();
+		*/
 	}
 
 	@Test
