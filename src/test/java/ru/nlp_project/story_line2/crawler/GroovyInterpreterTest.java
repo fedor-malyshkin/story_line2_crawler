@@ -20,51 +20,52 @@ import groovy.util.ScriptException;
 
 public class GroovyInterpreterTest {
 
-  private static Path scriptDir;
+	private static Path scriptDir;
 
-  @BeforeClass
-  public static void setUpClass() throws IOException {
-    scriptDir = Files.createTempDirectory("crawler");
-    FileUtils.forceDeleteOnExit(scriptDir.toFile());
-    FileUtils.copyDirectory(new File("src/main/groovy/ru/nlp_project/story_line2/crawler/parser"),
-        scriptDir.toFile());
+	@BeforeClass
+	public static void setUpClass() throws IOException {
+		scriptDir = Files.createTempDirectory("crawler");
+		FileUtils.forceDeleteOnExit(scriptDir.toFile());
+		FileUtils.copyDirectory(
+				new File("src/main/groovy/ru/nlp_project/story_line2/crawler/parser"),
+				scriptDir.toFile());
 
-  }
+	}
 
-  private GroovyInterpreter testable;
+	private GroovyInterpreter testable;
 
-  @Before
-  public void setUp() throws Exception {
-    ConfigurationReader configurationReader = new ConfigurationReader(null);
-    configurationReader.getConfigurationMain().scriptDir = scriptDir.toString();
-    testable = GroovyInterpreter.newInstance(configurationReader);
-  }
+	@Before
+	public void setUp() throws Exception {
+		CrawlerConfiguration configuration = new CrawlerConfiguration();
+		configuration.scriptDir = scriptDir.toString();
+		testable = GroovyInterpreter.newInstance(configuration);
+	}
 
-  @Test
-  public void testShouldVisit() throws IOException, ResourceException, ScriptException,
-      NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-      InvocationTargetException, InstantiationException {
-    WebURL webURL = new WebURL();
-    webURL.setURL("http://www.bnkomi.ru");
-    assertTrue(testable.shouldVisit("bnkomi.ru", webURL));
-  }
+	@Test
+	public void testShouldVisit() throws IOException, ResourceException, ScriptException,
+			NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, InstantiationException {
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://www.bnkomi.ru");
+		assertTrue(testable.shouldVisit("bnkomi.ru", webURL));
+	}
 
 
-  @Test
-  public void testShouldVisit_WrongDomain() throws IOException, ResourceException, ScriptException,
-      NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-      InvocationTargetException, InstantiationException {
-    assertFalse(testable.shouldVisit("xxxxx.ru", null));
-  }
-  
-  @Test()
-  public void testShouldVisit_WrongException() throws IOException, ResourceException, ScriptException,
-      NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException,
-      InvocationTargetException, InstantiationException {
-    WebURL webURL = new WebURL();
-    webURL.setURL("http://www.bnkomi.ru/1.png");
-    assertFalse(testable.shouldVisit("bnkomi.ru", webURL));
-  }
+	@Test
+	public void testShouldVisit_WrongDomain() throws IOException, ResourceException,
+			ScriptException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, InstantiationException {
+		assertFalse(testable.shouldVisit("xxxxx.ru", null));
+	}
+
+	@Test()
+	public void testShouldVisit_WrongException() throws IOException, ResourceException,
+			ScriptException, NoSuchMethodException, SecurityException, IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, InstantiationException {
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://www.bnkomi.ru/1.png");
+		assertFalse(testable.shouldVisit("bnkomi.ru", webURL));
+	}
 
 
 }

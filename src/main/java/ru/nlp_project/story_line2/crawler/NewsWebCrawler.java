@@ -1,21 +1,15 @@
 package ru.nlp_project.story_line2.crawler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,93 +21,101 @@ import edu.uci.ics.crawler4j.url.WebURL;
 
 public class NewsWebCrawler extends WebCrawler {
 
-  private GroovyInterpreter groovyInterpreter;
-  private ConfigurationReader configurationReader;
+	private GroovyInterpreter groovyInterpreter;
+	private CrawlerConfiguration configuration;
+	private MongoDBClientManager dbClientManager;
+	private ObjectMapper mapper;
+	private Logger myLogger;
+	private SimpleDateFormat dateFormatter;
 
-  public NewsWebCrawler(GroovyInterpreter groovyInterpreter,
-      ConfigurationReader configurationReader) {
-    this.groovyInterpreter = groovyInterpreter;
-    this.configurationReader = configurationReader;
-  }
+	public NewsWebCrawler(CrawlerConfiguration configuration, GroovyInterpreter groovyInterpreter,
+			MongoDBClientManager dbClientManager) {
+		myLogger = LoggerFactory.getLogger(this.getClass());
+		dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+		this.dbClientManager = dbClientManager;
+		this.groovyInterpreter = groovyInterpreter;
+		this.configuration = configuration;
+	}
 
-  /**
-   * This method receives two parameters. The first parameter is the page in which we have
-   * discovered this new url and the second parameter is the new url. You should implement this
-   * function to specify whether the given url should be crawled or not (based on your crawling
-   * logic). In this example, we are instructing the crawler to ignore urls that have css, js, git,
-   * ... extensions and to only accept urls that start with "http://www.ics.uci.edu/". In this case,
-   * we didn't need the referringPage parameter to make the decision.
-   */
-  @Override
-  public boolean shouldVisit(Page referringPage, WebURL url) {
-    return groovyInterpreter.shouldVisit(url.getDomain(), url);
-  }
+	/**
+	 * This method receives two parameters. The first parameter is the page in which we have
+	 * discovered this new url and the second parameter is the new url. You should implement this
+	 * function to specify whether the given url should be crawled or not (based on your crawling
+	 * logic). In this example, we are instructing the crawler to ignore urls that have css, js,
+	 * git, ... extensions and to only accept urls that start with "http://www.ics.uci.edu/". In
+	 * this case, we didn't need the referringPage parameter to make the decision.
+	 */
+	@Override
+	public boolean shouldVisit(Page referringPage, WebURL url) {
+		return groovyInterpreter.shouldVisit(url.getDomain(), url);
+	}
 
-  /**
-   * This function is called when a page is fetched and ready to be processed by your program.
-   */
-  @Override
-  public void visit(Page page) {
-    WebURL webURL = page.getWebURL();
-    if (page.getParseData() instanceof HtmlParseData) {
-      HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
-      String html = htmlParseData.getHtml();
+	/**
+	 * This function is called when a page is fetched and ready to be processed by your program.
+	 */
+	@Override
+	public void visit(Page page) {
+		WebURL webURL = page.getWebURL();
+		if (page.getParseData() instanceof HtmlParseData) {
+			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
+			String html = htmlParseData.getHtml();
 
-      Map<String, Object> data = groovyInterpreter.extractData(webURL.getDomain(), html);
-      if (null == data) {
-        System.out.println(webURL.getURL() + " has no content.");
-        return;
-      }
+			Map<String, Object> data = groovyInterpreter.extractData(webURL.getDomain(), html);
+			if (null == data) {
+				String msg = String.format("[%s] '%s' has no content.", webURL.getDomain(),
+						webURL.getURL());
+				myLogger.debug(msg);
+				return;
+			}
 
-      if (configurationReader.getConfigurationMain().storeFiles) {
-        try {
-          File file = new File("/var/tmp/" + System.currentTimeMillis() + ".json");
-          FileOutputStream outputStream = new FileOutputStream(file);
-          ObjectMapper mapper = new ObjectMapper();
-          Map<String, String> map = new HashMap<>();
+			if (configuration.storeFiles) {
+				File file = new File("/var/tmp/" + System.currentTimeMillis() + ".json");
+				try {
+					String json = serialize(webURL.getDomain().toLowerCase(),
+							webURL.getPath().toLowerCase(), webURL.getURL().toLowerCase(),
+							data.get("date").toString(), dateFormatter.format(new Date()),
+							data.get("title").toString(), data.get("content").toString());
+					FileUtils.write(file, json);
+					myLogger.trace("Create '" + file + "' file");
+				} catch (IOException e) {
+					myLogger.error(e.getMessage(), e);
+				}
+			} else {
+				try {
+					String json = serialize(webURL.getDomain().toLowerCase(),
+							webURL.getPath().toLowerCase(), webURL.getURL().toLowerCase(),
+							data.get("date").toString(), dateFormatter.format(new Date()),
+							data.get("title").toString(), data.get("content").toString());
+					dbClientManager.writeNews(json, webURL.getDomain(), webURL.getPath());
+				} catch (JsonProcessingException e) {
+					myLogger.error(e.getMessage(), e);
+				}
+			}
+		}
+	}
 
-          map.put("domain", webURL.getDomain());
-          map.put("url", webURL.getURL().toLowerCase());
-          map.put("date", data.get("date").toString());
-          map.put("content", data.get("content").toString());
-          map.put("title", data.get("title").toString());
+	public ObjectMapper getObjectMapper() {
+		if (mapper == null)
+			mapper = new ObjectMapper();
+		return mapper;
+	}
 
-          // content = StringEscapeUtils.escapeJson(data.get("content"));
-          mapper.writeValue(outputStream, map);
-          IOUtils.closeQuietly(outputStream);
-          System.out.println("Create '" + file + "' file");
-        } catch (FileNotFoundException e) {
-          e.printStackTrace();
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-      } else {
-        Client client = ClientBuilder.newClient();
-        WebTarget webTarget = client.target("http://localhost:8080/news");
-        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON_TYPE);
+	private String serialize(String domain, String path, String url, String date,
+			String creationDate, String title, String content) throws JsonProcessingException {
+		ObjectMapper mapper = getObjectMapper();
+		Map<String, String> map = new HashMap<>();
 
-        // mapping
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> map = new HashMap<>();
+		map.put("domain", domain);
+		map.put("path", path);
+		map.put("url", url);
+		map.put("date", date);
+		map.put("creationDate", creationDate);
+		map.put("content", content);
+		map.put("title", title);
 
-        map.put("domain", webURL.getDomain());
-        map.put("url", webURL.getURL().toLowerCase());
-        map.put("date", data.get("date").toString());
-        map.put("content", data.get("content").toString());
-        map.put("title", data.get("title").toString());
-        String json = "";
-        try {
-          json = mapper.writeValueAsString(map);
-        } catch (JsonProcessingException e) {
-          e.printStackTrace();
-        }
+		return mapper.writeValueAsString(map);
 
-        // call
-        Entity<String> entity = Entity.entity(json, MediaType.APPLICATION_JSON_TYPE);
-        Response response = invocationBuilder.post(entity);
-      }
-    }
-  }
+	}
 
 
 }

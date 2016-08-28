@@ -1,0 +1,13 @@
+---
+debug: false
+store_files: false
+logging_config_file: null
+crawler_per_site: 4
+script_dir: null
+sites: 
+ - domain: rerew
+   seed: ddd
+ - domain: rerew2
+   seed: ddd2
+storage_dir: null
+connection_url: localhost

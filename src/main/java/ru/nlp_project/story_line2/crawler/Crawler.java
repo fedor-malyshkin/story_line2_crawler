@@ -10,79 +10,98 @@ import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
-import ru.nlp_project.story_line2.crawler.ConfigurationReader.SiteConfiguration;
+import io.dropwizard.lifecycle.Managed;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.SiteConfiguration;
 
-public class Crawler {
-  public static Crawler newInstance(String configFile, boolean startAsync) throws Exception {
-    Crawler result = new Crawler(configFile, startAsync);
-    result.initialize();
-    return result;
-  }
+public class Crawler implements Managed {
 
-  private String configFile;
-  private boolean startAsync;
-  private GroovyInterpreter groovyInterpreter;
-  private List<CrawlController> controllers;
-  private ConfigurationReader configurationReader;
+	@Override
+	public void start() throws Exception {
+		initialize();
+		run();
+	}
 
-  private Crawler(String configFile, boolean startAsync) {
-    this.configFile = configFile;
-    this.startAsync = startAsync;
-  }
+	@Override
+	public void stop() throws Exception {
+		shutdown();
+	}
 
-  private void initialize() throws Exception {
-    configurationReader = ConfigurationReader.newInstance(configFile);
-    groovyInterpreter = GroovyInterpreter.newInstance(configurationReader);
-    controllers = new ArrayList<>();
+	private void shutdown() {
+		for (CrawlController c : controllers) {
+			c.shutdown();
+			c.waitUntilFinish();
+		}
+		mongoDBClientManager.shutdown();
 
-    for (SiteConfiguration site : configurationReader.getConfigurationMain().sites) {
-      CrawlConfig crawlConfig = createCrawlConfig(site);
-      CrawlController controller = createCrawlController(crawlConfig, site);
-      controllers.add(controller);
-    }
-  }
+	}
 
-  WebCrawlerFactory<NewsWebCrawler> factory = new WebCrawlerFactory<NewsWebCrawler>() {
+	public static Crawler newInstance(CrawlerConfiguration configuration) throws Exception {
+		Crawler result = new Crawler(configuration);
+		// because it is managed object - it starts in #start method)
+		// result.initialize();
+		return result;
+	}
 
-    @Override
-    public NewsWebCrawler newInstance() throws Exception {
-      return new NewsWebCrawler(groovyInterpreter, configurationReader);
-    }
-  };
+	private GroovyInterpreter groovyInterpreter;
+	private List<CrawlController> controllers;
+	private CrawlerConfiguration configuration;
+	private MongoDBClientManager mongoDBClientManager;
 
-  public void run() {
-    if (startAsync)
-      for (CrawlController c : controllers)
-        c.startNonBlocking(factory, configurationReader.getConfigurationMain().crawlerPerSite);
-    else
-      for (CrawlController c : controllers)
-        c.start(factory, configurationReader.getConfigurationMain().crawlerPerSite);
-  }
+	private Crawler(CrawlerConfiguration configuration) {
+		this.configuration = configuration;
+	}
 
-  private CrawlController createCrawlController(CrawlConfig crawlConfig, SiteConfiguration site)
-      throws Exception {
-    /*
-     * Instantiate the controller for this crawl.
-     */
-    PageFetcher pageFetcher = new PageFetcher(crawlConfig);
-    RobotstxtConfig robotsTxtConfig = new RobotstxtConfig();
-    RobotstxtServer robotstxtServer = new RobotstxtServer(robotsTxtConfig, pageFetcher);
-    CrawlController controller = new CrawlController(crawlConfig, pageFetcher, robotstxtServer);
+	private void initialize() throws Exception {
+		mongoDBClientManager = MongoDBClientManager.newInstance(configuration);
+		groovyInterpreter = GroovyInterpreter.newInstance(configuration);
+		controllers = new ArrayList<>();
 
-    /*
-     * For each crawl, you need to add some seed urls. These are the first URLs that are fetched and
-     * then the crawler starts following links which are found in these pages
-     */
-    controller.addSeed(site.seed);
-    return controller;
-  }
+		for (SiteConfiguration site : configuration.sites) {
+			CrawlConfig crawlConfig = createCrawlConfig(site);
+			CrawlController controller = createCrawlController(crawlConfig, site);
+			controllers.add(controller);
+		}
+	}
 
-  private CrawlConfig createCrawlConfig(SiteConfiguration site) {
-    String crawlStorageFolder =
-        configurationReader.getConfigurationMain().storageDir + File.separator + site.domain;
-    CrawlConfig config = new CrawlConfig();
-    config.setCrawlStorageFolder(crawlStorageFolder);
-    config.setResumableCrawling(true);
-    return config;
-  }
+	WebCrawlerFactory<NewsWebCrawler> factory = new WebCrawlerFactory<NewsWebCrawler>() {
+		@Override
+		public NewsWebCrawler newInstance() throws Exception {
+			return new NewsWebCrawler(configuration, groovyInterpreter, mongoDBClientManager);
+		}
+	};
+
+	private void run() {
+		if (configuration.async)
+			for (CrawlController c : controllers)
+				c.startNonBlocking(factory, configuration.crawlerPerSite);
+		else
+			for (CrawlController c : controllers)
+				c.start(factory, configuration.crawlerPerSite);
+	}
+
+	private CrawlController createCrawlController(CrawlConfig crawlConfig, SiteConfiguration site)
+			throws Exception {
+		/*
+		 * Instantiate the controller for this crawl.
+		 */
+		PageFetcher pageFetcher = new PageFetcher(crawlConfig);
+		RobotstxtConfig robotsTxtConfig = new RobotstxtConfig();
+		RobotstxtServer robotstxtServer = new RobotstxtServer(robotsTxtConfig, pageFetcher);
+		CrawlController controller = new CrawlController(crawlConfig, pageFetcher, robotstxtServer);
+
+		/*
+		 * For each crawl, you need to add some seed urls. These are the first URLs that are fetched
+		 * and then the crawler starts following links which are found in these pages
+		 */
+		controller.addSeed(site.seed);
+		return controller;
+	}
+
+	private CrawlConfig createCrawlConfig(SiteConfiguration site) {
+		String crawlStorageFolder = configuration.storageDir + File.separator + site.domain;
+		CrawlConfig config = new CrawlConfig();
+		config.setCrawlStorageFolder(crawlStorageFolder);
+		config.setResumableCrawling(true);
+		return config;
+	}
 }
