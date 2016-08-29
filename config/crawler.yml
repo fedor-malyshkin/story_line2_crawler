@@ -7,7 +7,7 @@ store_files: false
 # Количество потоков на сайт (лучше не более 4)
 crawler_per_site: 4
 # Папка со скриптами для парсинга контента сайтов
-script_dir: /tmp/crawler/scripts
+script_dir: src/main/groovy/ru/nlp_project/story_line2/crawler/parser
 # Блок с настройками для анализируемых сайтов
 sites:
    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
@@ -32,9 +32,6 @@ logging:
     - type: console
       threshold: TRACE
       target: stdout
-    - type: console
-      threshold: WARN
-      target: stderr
     - type: file
       # The file to which current statements will be logged.
       currentLogFilename: crawler.log
