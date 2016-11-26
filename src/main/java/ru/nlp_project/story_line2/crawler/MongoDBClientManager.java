@@ -11,10 +11,16 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 public class MongoDBClientManager {
 
+
+	public interface IDumpRecordProcessor {
+		void processDump(String domain, String path, String content);
+
+	}
 
 	private String connectionUrl;
 	private MongoClient client;
@@ -85,6 +91,21 @@ public class MongoDBClientManager {
 			collection = database.getCollection("news");
 		}
 		return collection;
+	}
+
+	public void dumpsAllNewsToFiles(IDumpRecordProcessor reader) {
+		collection = getNewsCollections();
+		FindIterable<Document> find = collection.find();
+		MongoCursor<Document> iterator = find.iterator();
+		while (iterator.hasNext()) {
+			Document doc = iterator.next();
+			String domain = doc.getString("domain");
+			String path = doc.getString("path");
+			String content = doc.getString("content");
+			reader.processDump(domain, path, content);
+		}
+
+
 	}
 
 }

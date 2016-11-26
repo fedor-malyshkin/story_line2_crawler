@@ -104,4 +104,11 @@ public class Crawler implements Managed {
 		config.setResumableCrawling(true);
 		return config;
 	}
+
+	public void dumpsNewsToFiles() throws Exception {
+		initialize();
+		CrawlController crawlController = controllers.get(0);
+			NewsWebCrawler webCrawler = factory.newInstance();
+		webCrawler.dumpsAllNewsToFiles();
+	}
 }

@@ -9,5 +9,7 @@ sites:
    seed: ddd
  - domain: rerew2
    seed: ddd2
-storage_dir: null
-connection_url: localhost
+# создается подпапка с именем домена для хранения соотвествующих данных)
+storage_dir: /tmp/crawler
+# строка подключения к MongoDB для сохранения результатаов анализа
+connection_url: mongodb://localhost:27017/
