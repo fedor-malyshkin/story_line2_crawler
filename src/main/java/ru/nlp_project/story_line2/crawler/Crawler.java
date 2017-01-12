@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
@@ -12,8 +14,19 @@ import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 import io.dropwizard.lifecycle.Managed;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.SiteConfiguration;
+import ru.nlp_project.story_line2.crawler.dagger.ApplicationComponent;
+import ru.nlp_project.story_line2.crawler.dagger.ApplicationModule;
+import ru.nlp_project.story_line2.crawler.dagger.DaggerApplicationComponent;
 
+/**
+ * Крулер - основной класс бизнес-логики и построения компонентов.
+ * 
+ * @author fedor
+ *
+ */
 public class Crawler implements Managed {
+
+	private static ApplicationComponent builder;
 
 	@Override
 	public void start() throws Exception {
@@ -37,23 +50,24 @@ public class Crawler implements Managed {
 
 	public static Crawler newInstance(CrawlerConfiguration configuration) throws Exception {
 		Crawler result = new Crawler(configuration);
-		// because it is managed object - it starts in #start method)
-		// result.initialize();
+		builder = DaggerApplicationComponent.builder()
+				.applicationModule(new ApplicationModule(configuration)).build();
+		builder.inject(result);
 		return result;
 	}
 
-	private GroovyInterpreter groovyInterpreter;
+	@Inject
+	public IGroovyInterpreter groovyInterpreter;
 	private List<CrawlController> controllers;
 	private CrawlerConfiguration configuration;
-	private MongoDBClientManager mongoDBClientManager;
+	@Inject
+	public IMongoDBClient mongoDBClientManager;
 
 	private Crawler(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
 	private void initialize() throws Exception {
-		mongoDBClientManager = MongoDBClientManager.newInstance(configuration);
-		groovyInterpreter = GroovyInterpreter.newInstance(configuration);
 		controllers = new ArrayList<>();
 
 		for (SiteConfiguration site : configuration.sites) {
@@ -66,7 +80,9 @@ public class Crawler implements Managed {
 	WebCrawlerFactory<NewsWebCrawler> factory = new WebCrawlerFactory<NewsWebCrawler>() {
 		@Override
 		public NewsWebCrawler newInstance() throws Exception {
-			return new NewsWebCrawler(configuration, groovyInterpreter, mongoDBClientManager);
+			NewsWebCrawler result = new NewsWebCrawler();
+			builder.inject(result);
+			return result;
 		}
 	};
 
@@ -108,7 +124,7 @@ public class Crawler implements Managed {
 	public void dumpsNewsToFiles() throws Exception {
 		initialize();
 		CrawlController crawlController = controllers.get(0);
-			NewsWebCrawler webCrawler = factory.newInstance();
+		NewsWebCrawler webCrawler = factory.newInstance();
 		webCrawler.dumpsAllNewsToFiles();
 	}
 }

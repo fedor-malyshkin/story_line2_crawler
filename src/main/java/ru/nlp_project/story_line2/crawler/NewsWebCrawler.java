@@ -7,6 +7,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,24 +20,28 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
-import ru.nlp_project.story_line2.crawler.MongoDBClientManager.IDumpRecordProcessor;
+import ru.nlp_project.story_line2.crawler.IMongoDBClient.IRecordIterationProcessor;
 
+/**
+ * Краулер для новостей.
+ * 
+ * @author fedor
+ *
+ */
 public class NewsWebCrawler extends WebCrawler {
-
-	private GroovyInterpreter groovyInterpreter;
-	private CrawlerConfiguration configuration;
-	private MongoDBClientManager dbClientManager;
+	@Inject
+	public IGroovyInterpreter groovyInterpreter;
+	@Inject
+	public CrawlerConfiguration configuration;
+	@Inject
+	public IMongoDBClient dbClientManager;
 	private ObjectMapper mapper;
 	private Logger myLogger;
 	private SimpleDateFormat dateFormatter;
 
-	public NewsWebCrawler(CrawlerConfiguration configuration, GroovyInterpreter groovyInterpreter,
-			MongoDBClientManager dbClientManager) {
+	public NewsWebCrawler() {
 		myLogger = LoggerFactory.getLogger(this.getClass());
 		dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-		this.dbClientManager = dbClientManager;
-		this.groovyInterpreter = groovyInterpreter;
-		this.configuration = configuration;
 	}
 
 	/**
@@ -124,13 +130,13 @@ public class NewsWebCrawler extends WebCrawler {
 	 * @param config
 	 */
 	public void dumpsAllNewsToFiles() {
-		dbClientManager.dumpsAllNewsToFiles(new IDumpRecordProcessor() {
+		dbClientManager.dumpsAllNewsToFiles(new IRecordIterationProcessor() {
 
 			@Override
-			public void processDump(String domain, String path, String content) {
+			public void processRecord(String domain, String path, String content) {
 				int ndx = path.lastIndexOf("/");
 				File file = new File(
-						"/var/tmp/" + domain + File.separator + path.substring(0,ndx) + ".txt");
+						"/var/tmp/" + domain + File.separator + path.substring(0, ndx) + ".txt");
 				try {
 					FileUtils.write(file, content);
 					myLogger.info("Create '" + file + "' file from (" + path + ")");

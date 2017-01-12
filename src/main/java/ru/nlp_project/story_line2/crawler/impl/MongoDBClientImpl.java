@@ -1,4 +1,4 @@
-package ru.nlp_project.story_line2.crawler;
+package ru.nlp_project.story_line2.crawler.impl;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -14,26 +14,31 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
-public class MongoDBClientManager {
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
+import ru.nlp_project.story_line2.crawler.IMongoDBClient;
 
+/**
+ * Клиент mongoDB для сохранения в БД.
+ * 
+ * 
+ * @author fedor
+ *
+ */
+public class MongoDBClientImpl implements IMongoDBClient {
 
-	public interface IDumpRecordProcessor {
-		void processDump(String domain, String path, String content);
-
-	}
 
 	private String connectionUrl;
 	private MongoClient client;
 	private MongoCollection<Document> collection;
 	private Logger logger;
 
-	public MongoDBClientManager(String connectionUrl) {
+	public MongoDBClientImpl(String connectionUrl) {
 		logger = LoggerFactory.getLogger(this.getClass());
 		this.connectionUrl = connectionUrl;
 	}
 
-	public static MongoDBClientManager newInstance(CrawlerConfiguration configuration) {
-		MongoDBClientManager result = new MongoDBClientManager(configuration.connectionUrl);
+	public static MongoDBClientImpl newInstance(CrawlerConfiguration configuration) {
+		MongoDBClientImpl result = new MongoDBClientImpl(configuration.connectionUrl);
 		result.initialize();
 		return result;
 	}
@@ -43,18 +48,18 @@ public class MongoDBClientManager {
 		this.client = new MongoClient(mongoClientURI);
 	}
 
+	/* (non-Javadoc)
+	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#shutdown()
+	 */
+	@Override
 	public void shutdown() {
 		client.close();
 	}
 
-	/**
-	 * Произвести запись в БД для уникальной комбинации domain:path. При наличии подобной записи -
-	 * не делать ничего.
-	 * 
-	 * @param json
-	 * @param domain
-	 * @param path
+	/* (non-Javadoc)
+	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#writeNews(java.lang.String, java.lang.String, java.lang.String)
 	 */
+	@Override
 	public void writeNews(String json, String domain, String path) {
 		collection = getNewsCollections();
 		FindIterable<Document> find = collection.find(and(eq("domain", domain), eq("path", path)));
@@ -93,7 +98,11 @@ public class MongoDBClientManager {
 		return collection;
 	}
 
-	public void dumpsAllNewsToFiles(IDumpRecordProcessor reader) {
+	/* (non-Javadoc)
+	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#dumpsAllNewsToFiles(ru.nlp_project.story_line2.crawler.MongoDBClientManager.IDumpRecordProcessor)
+	 */
+	@Override
+	public void dumpsAllNewsToFiles(IRecordIterationProcessor reader) {
 		collection = getNewsCollections();
 		FindIterable<Document> find = collection.find();
 		MongoCursor<Document> iterator = find.iterator();
@@ -102,7 +111,7 @@ public class MongoDBClientManager {
 			String domain = doc.getString("domain");
 			String path = doc.getString("path");
 			String content = doc.getString("content");
-			reader.processDump(domain, path, content);
+			reader.processRecord(domain, path, content);
 		}
 
 

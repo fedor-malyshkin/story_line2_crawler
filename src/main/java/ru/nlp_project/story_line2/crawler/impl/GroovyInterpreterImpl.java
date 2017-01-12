@@ -1,4 +1,4 @@
-package ru.nlp_project.story_line2.crawler;
+package ru.nlp_project.story_line2.crawler.impl;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +17,16 @@ import edu.uci.ics.crawler4j.url.WebURL;
 import groovy.util.GroovyScriptEngine;
 import groovy.util.ResourceException;
 import groovy.util.ScriptException;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
+import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 
-public class GroovyInterpreter {
+/**
+ * Интерпретатор groovy. Для скриптов, анализирующих html-страницы источников.
+ * 
+ * @author fedor
+ *
+ */
+public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
 	private static final String GROOVY_EXT_NAME = "groovy";
 	private static final String SCRIPT_DOMAIN_STATIC_FILED = "domain";
@@ -28,13 +36,13 @@ public class GroovyInterpreter {
 	private HashMap<String, Class<?>> domainMap;
 	private Logger logger;
 
-	private GroovyInterpreter() {
+	private GroovyInterpreterImpl() {
 		logger = LoggerFactory.getLogger(this.getClass());
 	}
 
-	public static GroovyInterpreter newInstance(CrawlerConfiguration configuration)
+	public static GroovyInterpreterImpl newInstance(CrawlerConfiguration configuration)
 			throws IllegalStateException {
-		GroovyInterpreter result = new GroovyInterpreter();
+		GroovyInterpreterImpl result = new GroovyInterpreterImpl();
 		result.initialize(configuration);
 		return result;
 	}
@@ -59,6 +67,10 @@ public class GroovyInterpreter {
 	}
 
 
+	/* (non-Javadoc)
+	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#shouldVisit(java.lang.String, edu.uci.ics.crawler4j.url.WebURL)
+	 */
+	@Override
 	public boolean shouldVisit(String domain, WebURL webURL) throws IllegalStateException {
 		if (!domainMap.containsKey(domain.toLowerCase()))
 			return false;
@@ -80,6 +92,10 @@ public class GroovyInterpreter {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractData(java.lang.String, java.lang.String)
+	 */
+	@Override
 	@SuppressWarnings("unchecked")
 	public Map<String, Object> extractData(String domain, String html)
 			throws IllegalStateException {

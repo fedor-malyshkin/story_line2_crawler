@@ -8,6 +8,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.dropwizard.Configuration;
 
+/**
+ * Объект-конфигурация (требуется фреймворком dropwizard.io)/
+ * 
+ * @author fedor
+ *
+ */
 public class CrawlerConfiguration extends Configuration {
 	static class SiteConfiguration {
 		@NotEmpty

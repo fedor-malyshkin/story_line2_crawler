@@ -17,6 +17,7 @@ import org.junit.Test;
 import edu.uci.ics.crawler4j.url.WebURL;
 import groovy.util.ResourceException;
 import groovy.util.ScriptException;
+import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 
 public class GroovyInterpreterTest {
 
@@ -32,13 +33,13 @@ public class GroovyInterpreterTest {
 
 	}
 
-	private GroovyInterpreter testable;
+	private IGroovyInterpreter testable;
 
 	@Before
 	public void setUp() throws Exception {
 		CrawlerConfiguration configuration = new CrawlerConfiguration();
 		configuration.scriptDir = scriptDir.toString();
-		testable = GroovyInterpreter.newInstance(configuration);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 
 	@Test

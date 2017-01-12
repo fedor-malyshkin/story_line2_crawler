@@ -3,6 +3,8 @@ package ru.nlp_project.story_line2.crawler;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,13 +36,13 @@ public class ParsersTest {
 
 	}
 
-	private GroovyInterpreter testable;
+	private IGroovyInterpreter testable;
 
 	@Before
 	public void setUp() throws Exception {
 		CrawlerConfiguration configuration = new CrawlerConfiguration();
 		configuration.scriptDir = scriptDir.toString();
-		testable = GroovyInterpreter.newInstance(configuration);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 
 	@Test

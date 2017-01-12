@@ -19,6 +19,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
+import io.dropwizard.setup.Environment;
 
 public class CrawlerApplicationTest {
 	private Environment environment = mock(Environment.class);
@@ -53,11 +54,6 @@ public class CrawlerApplicationTest {
 		// when(hcRegistry.register(anyString(), anyObject()));
 	}
 
-	@Test
-	@Ignore
-	public void buildsAThingResource() throws Exception {
-		application.run(configuration, environment);
-	}
 
 	/**
 	 * Осуществить дамп всех новостей в файл в каталоге локального хранилища для кравлера.
