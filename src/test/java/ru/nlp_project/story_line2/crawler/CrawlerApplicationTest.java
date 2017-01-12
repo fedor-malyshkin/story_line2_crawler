@@ -19,7 +19,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import io.dropwizard.jackson.Jackson;
 import io.dropwizard.jersey.setup.JerseyEnvironment;
-import io.dropwizard.setup.Environment;
 
 public class CrawlerApplicationTest {
 	private Environment environment = mock(Environment.class);
