@@ -37,7 +37,6 @@ public class CrawlerConfigurationTest {
 				new File(configDir.toFile() + File.separator + "CrawlerConfigurationTest.yml"),
 				CrawlerConfiguration.class);
 		assertEquals(4, value.crawlerPerSite);
-		assertEquals(false, value.debug);
 		assertEquals(2, value.sites.size());
 	}
 

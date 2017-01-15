@@ -1,3 +1,4 @@
 #!/bin/sh
-java -jar build/libs/crawler-0.1-SNAPSHOT-all.jar server config/crawler.yml
+gradle shadowJar
+java -jar build/libs/crawler-*-all.jar server src/test/resources/ru/nlp_project/story_line2/crawler/crawler_config.yml
 

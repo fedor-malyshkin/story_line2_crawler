@@ -24,14 +24,11 @@ public class CrawlerConfiguration extends Configuration {
 		@JsonProperty(value = "seed")
 		public String seed;
 	}
-	@JsonProperty(value = "debug")
-	public boolean debug = false;
+
 	@JsonProperty(value = "async")
 	public boolean async = true;
 	@JsonProperty(value = "store_files")
 	public boolean storeFiles = false;
-	@JsonProperty(value = "logging_config_file")
-	public String loggingConfigFile;
 	@JsonProperty(value = "crawler_per_site")
 	public int crawlerPerSite = 4;
 	@NotEmpty

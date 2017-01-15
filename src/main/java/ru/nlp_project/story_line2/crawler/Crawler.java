@@ -121,10 +121,4 @@ public class Crawler implements Managed {
 		return config;
 	}
 
-	public void dumpsNewsToFiles() throws Exception {
-		initialize();
-		CrawlController crawlController = controllers.get(0);
-		NewsWebCrawler webCrawler = factory.newInstance();
-		webCrawler.dumpsAllNewsToFiles();
-	}
 }

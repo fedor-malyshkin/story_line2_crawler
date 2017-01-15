@@ -27,24 +27,11 @@ public class CrawlerApplication extends Application<CrawlerConfiguration> {
 	@Override
 	public void run(CrawlerConfiguration configuration, Environment environment) throws Exception {
 		final CrawlerHealthCheck healthCheck = new CrawlerHealthCheck(configuration);
-		
+
 		environment.healthChecks().register("crawler", healthCheck);
 		Crawler crawler = Crawler.newInstance(configuration);
 		environment.lifecycle().manage(crawler);
 	}
-	
-	/**
-	 * Осуществить дамп всех новостей в файл в каталоге локального хранилища для кравлера.
-	 * 
-	 * @param configuration
-	 * @param environment
-	 * @throws Exception
-	 */
-	public void dumpsNewsToFiles(CrawlerConfiguration configuration, Environment environment) throws Exception {
-		Crawler crawler = Crawler.newInstance(configuration);
-		crawler.dumpsNewsToFiles();
-	}
-
 
 }
 

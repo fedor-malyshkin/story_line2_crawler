@@ -20,7 +20,6 @@ import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.WebURL;
-import ru.nlp_project.story_line2.crawler.IMongoDBClient.IRecordIterationProcessor;
 
 /**
  * Краулер для новостей.
@@ -123,32 +122,5 @@ public class NewsWebCrawler extends WebCrawler {
 		return mapper.writeValueAsString(map);
 
 	}
-
-	/**
-	 * Осуществить дамп всех новостей в файл в каталоге локального хранилища для кравлера.
-	 * 
-	 * @param config
-	 */
-	public void dumpsAllNewsToFiles() {
-		dbClientManager.dumpsAllNewsToFiles(new IRecordIterationProcessor() {
-
-			@Override
-			public void processRecord(String domain, String path, String content) {
-				int ndx = path.lastIndexOf("/");
-				File file = new File(
-						"/var/tmp/" + domain + File.separator + path.substring(0, ndx) + ".txt");
-				try {
-					FileUtils.write(file, content);
-					myLogger.info("Create '" + file + "' file from (" + path + ")");
-					System.out.println("Create '" + file + "' file from (" + path + ")");
-				} catch (IOException e) {
-					myLogger.error(e.getMessage(), e);
-				}
-			}
-		});
-
-
-	}
-
 
 }

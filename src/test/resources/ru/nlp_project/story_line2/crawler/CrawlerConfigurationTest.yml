@@ -1,7 +1,4 @@
 ---
-debug: false
-store_files: false
-logging_config_file: null
 crawler_per_site: 4
 script_dir: null
 sites: 
