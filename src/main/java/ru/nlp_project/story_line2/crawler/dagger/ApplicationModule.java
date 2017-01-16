@@ -34,7 +34,6 @@ public class ApplicationModule {
 	}
 	
 	@Provides
-	@Singleton
 	public CrawlerConfiguration provideCrawlerConfiguration() {
 		return configuration;
 	}

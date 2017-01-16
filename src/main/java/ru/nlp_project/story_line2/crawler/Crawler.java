@@ -52,7 +52,6 @@ public class Crawler implements Managed {
 		Crawler result = new Crawler(configuration);
 		builder = DaggerApplicationComponent.builder()
 				.applicationModule(new ApplicationModule(configuration)).build();
-		builder.inject(result);
 		return result;
 	}
 

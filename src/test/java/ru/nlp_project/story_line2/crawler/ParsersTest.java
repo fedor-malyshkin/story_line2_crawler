@@ -51,7 +51,7 @@ public class ParsersTest {
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.html"));
 		Map<String, Object> data = testable.extractData("bnkomi.ru", content);
 		// 05.07.2016 19:55
-		assertEquals("2016-07-05T19:55:00.000+03:00", data.get("date").toString());
+		assertEquals("Tue Jul 05 19:55:00 MSK 2016", data.get("date").toString());
 		assertEquals("Минимальная цена билета на ЧМ-2018 для россиян - 1280 рублей",
 				data.get("title"));
 		assertEquals(950, data.get("content").toString().length());
@@ -68,7 +68,7 @@ public class ParsersTest {
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.doc.html"));
 		Map<String, Object> data = testable.extractData("bnkomi.ru", content);
 		// 05.07.2016 19:55
-		assertEquals("2016-07-07T12:47:00.000+03:00", data.get("date").toString());
+		assertEquals("Thu Jul 07 12:47:00 MSK 2016", data.get("date").toString());
 		assertEquals(
 				"На обсуждение: «В России к осени разработают новую концепцию поддержки автопрома»",
 				data.get("title"));

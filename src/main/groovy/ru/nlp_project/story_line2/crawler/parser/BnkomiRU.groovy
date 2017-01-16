@@ -16,7 +16,7 @@ def extractData (html) {
 	
 	// 05.07.2016 19:55
 	DateTimeFormatter fmt = DateTimeFormat.forPattern("dd.MM.yyyy HH:mm");
-	date = fmt.parseDateTime(date);
+	date = fmt.parseDateTime(date).toDate();
 	
 	
 	def content = doc.select("div.b-news-single  > div.cnt").text();
@@ -30,7 +30,7 @@ def shouldVisit(url)
     def matcher = (href =~ pattern)
     if (matcher.matches())         
         return false
-    return href.startsWith("http://www.bnkomi.ru");
+    return true;
 }
 
 }

@@ -72,6 +72,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	 */
 	@Override
 	public boolean shouldVisit(String domain, WebURL webURL) throws IllegalStateException {
+		// важная отсечка сайтов из других доменов!!!		
 		if (!domainMap.containsKey(domain.toLowerCase()))
 			return false;
 

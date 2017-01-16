@@ -1,20 +1,17 @@
 package ru.nlp_project.story_line2.crawler;
 
-import java.io.File;
-import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
@@ -36,11 +33,9 @@ public class NewsWebCrawler extends WebCrawler {
 	public IMongoDBClient dbClientManager;
 	private ObjectMapper mapper;
 	private Logger myLogger;
-	private SimpleDateFormat dateFormatter;
 
 	public NewsWebCrawler() {
 		myLogger = LoggerFactory.getLogger(this.getClass());
-		dateFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
 	}
 
 	/**
@@ -53,6 +48,8 @@ public class NewsWebCrawler extends WebCrawler {
 	 */
 	@Override
 	public boolean shouldVisit(Page referringPage, WebURL url) {
+		// в случае если страница будет отвергнута -- она не будет проанализирована и самой
+		// библиотекой
 		return groovyInterpreter.shouldVisit(url.getDomain(), url);
 	}
 
@@ -74,53 +71,32 @@ public class NewsWebCrawler extends WebCrawler {
 				return;
 			}
 
-			if (configuration.storeFiles) {
-				File file = new File("/var/tmp/" + System.currentTimeMillis() + ".json");
-				try {
-					String json = serialize(webURL.getDomain().toLowerCase(),
-							webURL.getPath().toLowerCase(), webURL.getURL().toLowerCase(),
-							data.get("date").toString(), dateFormatter.format(new Date()),
-							data.get("title").toString(), data.get("content").toString());
-					FileUtils.write(file, json);
-					myLogger.trace("Create '" + file + "' file");
-				} catch (IOException e) {
-					myLogger.error(e.getMessage(), e);
-				}
-			} else {
-				try {
-					String json = serialize(webURL.getDomain().toLowerCase(),
-							webURL.getPath().toLowerCase(), webURL.getURL().toLowerCase(),
-							data.get("date").toString(), dateFormatter.format(new Date()),
-							data.get("title").toString(), data.get("content").toString());
-					dbClientManager.writeNews(json, webURL.getDomain(), webURL.getPath());
-				} catch (JsonProcessingException e) {
-					myLogger.error(e.getMessage(), e);
-				}
+			try {
+				String json =
+						serialize(webURL.getDomain().toLowerCase(), webURL.getPath().toLowerCase(),
+								webURL.getURL().toLowerCase(), (Date) data.get("date"), new Date(),
+								data.get("title").toString(), data.get("content").toString());
+				dbClientManager.writeNews(json, webURL.getDomain(), webURL.getPath());
+			} catch (JsonProcessingException e) {
+				myLogger.error(e.getMessage(), e);
 			}
 		}
 	}
 
 	public ObjectMapper getObjectMapper() {
-		if (mapper == null)
-			mapper = new ObjectMapper();
+		if (mapper == null) {
+			mapper = new ObjectMapper(new JsonFactory());
+			mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		}
 		return mapper;
 	}
 
-	private String serialize(String domain, String path, String url, String date,
-			String creationDate, String title, String content) throws JsonProcessingException {
+	private String serialize(String domain, String path, String url, Date date, Date creationDate,
+			String title, String content) throws JsonProcessingException {
 		ObjectMapper mapper = getObjectMapper();
-		Map<String, String> map = new HashMap<>();
-
-		map.put("domain", domain);
-		map.put("path", path);
-		map.put("url", url);
-		map.put("date", date);
-		map.put("creationDate", creationDate);
-		map.put("content", content);
-		map.put("title", title);
-
-		return mapper.writeValueAsString(map);
-
+		NewsArticle article =
+				new NewsArticle(creationDate, date, content, path, domain, title, url);
+		return mapper.writeValueAsString(article);
 	}
 
 }
