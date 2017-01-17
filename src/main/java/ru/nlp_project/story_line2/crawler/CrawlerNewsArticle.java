@@ -5,15 +5,17 @@ import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class NewsArticle {
+import de.undercouch.bson4jackson.types.ObjectId;
 
-	public NewsArticle() {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class CrawlerNewsArticle {
+
+	public CrawlerNewsArticle() {
 		super();
 	}
 
-	public NewsArticle(Date creationDate, Date date, String content, String path, String domain,
-			String title, String url) {
+	public CrawlerNewsArticle(Date creationDate, Date date, String content, String path,
+			String domain, String title, String url) {
 		super();
 		this.creationDate = creationDate;
 		this.date = date;
@@ -24,6 +26,8 @@ public class NewsArticle {
 		this.url = url;
 	}
 
+	@JsonProperty("_id")
+	ObjectId _id;
 	/**
 	 * фактическая дата записис в БД
 	 */

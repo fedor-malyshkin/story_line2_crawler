@@ -12,7 +12,6 @@ import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 import ru.nlp_project.story_line2.crawler.impl.MongoDBClientImpl;
 
 @Module
-
 public class ApplicationModule {
 	CrawlerConfiguration configuration;
 
