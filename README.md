@@ -46,8 +46,8 @@ connection_url: mongodb://localhost:27017/
 ```
 {
 	"_id" : ObjectId("587cbc11aca9f3482120b052"),
-	"creation_date" : "2017-01-16T12:26:57.815+0000",
-	"date" : "2017-01-13T16:06:00.000+0000",
+	"creation_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
+	"date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
 	"content" : "Около ... фактическим исполнением.",
 	"path" : "/data/news/58212/",
 	"domain" : "bnkomi.ru",

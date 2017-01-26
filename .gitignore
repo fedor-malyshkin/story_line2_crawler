@@ -16,3 +16,4 @@ build
 
 /.apt_generated/
 *.factorypath
+*.log.gz
