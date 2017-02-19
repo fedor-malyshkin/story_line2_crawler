@@ -15,10 +15,26 @@ import io.dropwizard.Configuration;
  *
  */
 public class CrawlerConfiguration extends Configuration {
-	static class SiteConfiguration {
+	public static class FeedSiteConfiguration {
 		@NotEmpty
-		@JsonProperty(value = "domain")
-		public String domain;
+		@JsonProperty(value = "source")
+		public String source;
+
+
+		@NotEmpty
+		@JsonProperty(value = "feed")
+		public String feed;
+
+		@NotEmpty
+		@JsonProperty(value = "cron_schedule")
+		public String cronSchedule;
+	}
+
+
+	public static class ParseSiteConfiguration {
+		@NotEmpty
+		@JsonProperty(value = "source")
+		public String source;
 
 		@NotEmpty
 		@JsonProperty(value = "seed")
@@ -30,14 +46,17 @@ public class CrawlerConfiguration extends Configuration {
 	@JsonProperty(value = "crawler_per_site")
 	public int crawlerPerSite = 4;
 	@NotEmpty
-	@JsonProperty(value = "script_dir")
+	@JsonProperty(value = "crawler_script_dir")
 	public String scriptDir;
-	@JsonProperty(value = "sites")
-	public ArrayList<SiteConfiguration> sites = new ArrayList<>();
+	@JsonProperty(value = "parse_sites")
+	public ArrayList<ParseSiteConfiguration> parseSites = new ArrayList<>();
+	@JsonProperty(value = "feed_sites")
+	public ArrayList<FeedSiteConfiguration> feedSites = new ArrayList<>();
+
 	@NotEmpty
-	@JsonProperty(value = "storage_dir")
+	@JsonProperty(value = "crawler_storage_dir")
 	public String storageDir;
 	@NotEmpty
-	@JsonProperty(value = "connection_url")
+	@JsonProperty(value = "mongodb_connection_url")
 	public String connectionUrl;
 }

@@ -1,20 +1,23 @@
 package ru.nlp_project.story_line2.crawler;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-
-import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 
+import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.*;
+
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import edu.uci.ics.crawler4j.url.WebURL;
+import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 
 public class ParsersTest {
 
@@ -49,15 +52,17 @@ public class ParsersTest {
 	public void test_BnkomiRU() throws IOException {
 		String content = FileUtils.readFileToString(
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.html"));
-		Map<String, Object> data = testable.extractData("bnkomi.ru", content);
+		WebURL webURL = new WebURL();
+		webURL.setURL("www.bnkomi.ru/data/news/51840");
+		Map<String, Object> data = testable.extractData("bnkomi.ru", webURL, content);
 		// 05.07.2016 19:55
-		assertEquals("Tue Jul 05 19:55:00 MSK 2016", data.get("date").toString());
+		assertEquals("Tue Jul 05 19:55:00 MSK 2016", data.get(EXTR_KEY_PUB_DATE).toString());
 		assertEquals("Минимальная цена билета на ЧМ-2018 для россиян - 1280 рублей",
-				data.get("title"));
-		assertEquals(950, data.get("content").toString().length());
-		assertTrue(data.get("content").toString()
+				data.get(EXTR_KEY_TITLE));
+		assertEquals(950, data.get(EXTR_KEY_CONTENT).toString().length());
+		assertTrue(data.get(EXTR_KEY_CONTENT).toString()
 				.startsWith("Минимальная цена билета на матч чемпионата мира"));
-		assertTrue(data.get("content").toString()
+		assertTrue(data.get(EXTR_KEY_CONTENT).toString()
 				.endsWith("на матч открытия составит $550, на финал — $1100."));
 	}
 
@@ -66,16 +71,21 @@ public class ParsersTest {
 	public void test_BnkomiRU_Doc() throws IOException {
 		String content = FileUtils.readFileToString(
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.doc.html"));
-		Map<String, Object> data = testable.extractData("bnkomi.ru", content);
+		WebURL webURL = new WebURL();
+		webURL.setURL("www.bnkomi.ru/data/doc/51898/");
+		Map<String, Object> data = testable.extractData("bnkomi.ru", webURL, content);
 		// 05.07.2016 19:55
-		assertEquals("Thu Jul 07 12:47:00 MSK 2016", data.get("date").toString());
+		assertEquals("Thu Jul 07 12:47:00 MSK 2016", data.get(EXTR_KEY_PUB_DATE).toString());
 		assertEquals(
 				"На обсуждение: «В России к осени разработают новую концепцию поддержки автопрома»",
 				data.get("title"));
-		assertEquals(4663, data.get("content").toString().length());
-		assertTrue(data.get("content").toString().startsWith(
+		assertEquals(4663, data.get(EXTR_KEY_CONTENT).toString().length());
+		assertTrue(data.get(EXTR_KEY_CONTENT).toString().startsWith(
 				"В правительстве изучают возможность создания нового механизма привлечения"));
-		assertTrue(data.get("content").toString().endsWith(
+		assertTrue(data.get(EXTR_KEY_CONTENT).toString().endsWith(
 				"2-3 уровней — при условии господдержки и с учетом наличия сырьевой базы."));
+		assertEquals(
+				"bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
+				data.get(EXTR_KEY_IMAGE_URL));
 	}
 }

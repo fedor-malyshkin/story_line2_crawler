@@ -3,12 +3,8 @@ package ru.nlp_project.story_line2.crawler;
 import com.mongodb.DBObject;
 
 public interface IMongoDBClient {
-
-	public interface IRecordIterationProcessor {
-		void processRecord(String domain, String path, String content);
-
-	}
-
+	public static final String DB_NAME = "crawler";
+	public static final String COLLECTION_NAME = "crawler_entries";
 
 	void shutdown();
 
@@ -17,11 +13,10 @@ public interface IMongoDBClient {
 	 * не делать ничего.
 	 * 
 	 * @param dbObject
-	 * @param domain
+	 * @param source
 	 * @param path
 	 */
-	void writeNews(DBObject dbObject, String domain, String path);
+	void writeNews(DBObject dbObject, String source, String path);
 
-	void dumpsAllNewsToFiles(IRecordIterationProcessor reader);
 
 }

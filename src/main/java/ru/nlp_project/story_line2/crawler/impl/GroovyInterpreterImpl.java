@@ -1,9 +1,7 @@
 package ru.nlp_project.story_line2.crawler.impl;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.HashMap;
@@ -15,8 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import edu.uci.ics.crawler4j.url.WebURL;
 import groovy.util.GroovyScriptEngine;
-import groovy.util.ResourceException;
-import groovy.util.ScriptException;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 
@@ -60,19 +56,22 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 				String domain = (String) field.get(null);
 				domainMap.put(domain.toLowerCase(), scriptClass);
 			}
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException
-				| IllegalAccessException | IOException | ResourceException | ScriptException e) {
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
 			throw new IllegalStateException(e);
 		}
 	}
 
 
-	/* (non-Javadoc)
-	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#shouldVisit(java.lang.String, edu.uci.ics.crawler4j.url.WebURL)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#shouldVisit(java.lang.String,
+	 * edu.uci.ics.crawler4j.url.WebURL)
 	 */
 	@Override
 	public boolean shouldVisit(String domain, WebURL webURL) throws IllegalStateException {
-		// важная отсечка сайтов из других доменов!!!		
+		// важная отсечка сайтов из других доменов!!!
 		if (!domainMap.containsKey(domain.toLowerCase()))
 			return false;
 
@@ -83,39 +82,39 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 			Boolean result = (Boolean) method.invoke(instance, webURL);
 
 			return result.booleanValue();
-		} catch (SecurityException | IllegalArgumentException | IllegalAccessException
-				| IllegalStateException | InvocationTargetException | NoSuchMethodException
-				| InstantiationException e) {
-			String msg = String.format("Exception while processing 'shouldVisit' ('%s', '%s')",
-					domain, webURL);
-			logger.error(msg, e);
+		} catch (Exception e) {
+			logger.error("Exception while processing 'shouldVisit' ({}, {})", domain,
+					webURL.getPath(), e);
 			throw new IllegalStateException(e);
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractData(java.lang.String, java.lang.String)
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractData(java.lang.String,
+	 * java.lang.String)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> extractData(String domain, String html)
+	public Map<String, Object> extractData(String domain, WebURL webURL, String html)
 			throws IllegalStateException {
-		if (!domainMap.containsKey(domain.toLowerCase()))
+		if (!domainMap.containsKey(domain.toLowerCase())) {
+			logger.error("No script for domain: '{}'", domain);
 			throw new IllegalArgumentException("No script for domain: " + domain);
+		}
 
 		Class<?> class1 = domainMap.get(domain.toLowerCase());
 
 		try {
 			Object instance = class1.newInstance();
-			Method method = class1.getMethod(SCRIPT_EXTRACT_DATA_METHOD_NAME, Object.class);
-			Map<String, Object> result = (Map<String, Object>) method.invoke(instance, html);
+			Method method = class1.getMethod(SCRIPT_EXTRACT_DATA_METHOD_NAME, Object.class,
+					Object.class, Object.class);
+			Map<String, Object> result =
+					(Map<String, Object>) method.invoke(instance, domain, webURL, html);
 			return result;
-		} catch (SecurityException | IllegalArgumentException | IllegalAccessException
-				| IllegalStateException | InvocationTargetException | NoSuchMethodException
-				| InstantiationException e) {
-			String msg = String.format("Exception while processing 'extractData' ('%s', 'html')",
-					domain);
-			logger.error(msg, e);
+		} catch (Exception e) {
+			logger.error("Exception while processing {}:{}", domain, webURL.getPath(), e);
 			throw new IllegalStateException(e);
 		}
 	}

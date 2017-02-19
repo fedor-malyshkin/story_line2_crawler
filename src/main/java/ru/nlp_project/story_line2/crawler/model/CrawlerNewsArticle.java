@@ -1,11 +1,9 @@
-package ru.nlp_project.story_line2.crawler;
+package ru.nlp_project.story_line2.crawler.model;
 
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import de.undercouch.bson4jackson.types.ObjectId;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CrawlerNewsArticle {
@@ -14,30 +12,32 @@ public class CrawlerNewsArticle {
 		super();
 	}
 
-	public CrawlerNewsArticle(Date creationDate, Date date, String content, String path,
-			String domain, String title, String url) {
+	public CrawlerNewsArticle(String domain, String path, String url, Date publicationDate,
+			Date processingDate, String title, String content, String imageUrl, byte[] imageData) {
 		super();
-		this.creationDate = creationDate;
-		this.date = date;
+		this.publicationDate = publicationDate;
+		this.processingDate = processingDate;
 		this.content = content;
 		this.path = path;
 		this.domain = domain;
 		this.title = title;
 		this.url = url;
+		this.imageUrl = imageUrl;
+		this.imageData = imageData;
 	}
 
 	@JsonProperty("_id")
-	ObjectId _id;
+	Id _id;
 	/**
 	 * фактическая дата записис в БД
 	 */
-	@JsonProperty("creation_date")
-	Date creationDate = new Date();
+	@JsonProperty("processing_date")
+	Date processingDate = new Date();
 	/**
 	 * дата новости
 	 */
-	@JsonProperty("date")
-	Date date;
+	@JsonProperty("publication_date")
+	Date publicationDate;
 	/**
 	 * текст новости/статьи
 	 */
@@ -51,7 +51,7 @@ public class CrawlerNewsArticle {
 	/**
 	 * домен сайта (без протокола)
 	 */
-	@JsonProperty("domain")
+	@JsonProperty("source")
 	String domain;
 	/**
 	 * заголовок новости/статьи
@@ -63,4 +63,13 @@ public class CrawlerNewsArticle {
 	 */
 	@JsonProperty("url")
 	String url;
+
+	/**
+	 * ссылка на страницу
+	 */
+	@JsonProperty("image_url")
+	String imageUrl;
+
+	@JsonProperty("image_data")
+	byte[] imageData;
 }

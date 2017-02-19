@@ -31,6 +31,9 @@ public class CrawlerApplication extends Application<CrawlerConfiguration> {
 		environment.healthChecks().register("crawler", healthCheck);
 		Crawler crawler = Crawler.newInstance(configuration);
 		environment.lifecycle().manage(crawler);
+		
+		
+
 	}
 
 }

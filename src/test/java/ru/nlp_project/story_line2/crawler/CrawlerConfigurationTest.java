@@ -36,8 +36,8 @@ public class CrawlerConfigurationTest {
 		CrawlerConfiguration value = mapper.readValue(
 				new File(configDir.toFile() + File.separator + "CrawlerConfigurationTest.yml"),
 				CrawlerConfiguration.class);
-		assertEquals(4, value.crawlerPerSite);
-		assertEquals(2, value.sites.size());
+		assertEquals(1, value.crawlerPerSite);
+		assertEquals(1, value.parseSites.size());
 	}
 
 }

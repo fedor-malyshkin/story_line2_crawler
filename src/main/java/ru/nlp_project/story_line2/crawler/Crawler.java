@@ -1,22 +1,31 @@
 package ru.nlp_project.story_line2.crawler;
 
-import java.io.File;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
-import edu.uci.ics.crawler4j.crawler.CrawlConfig;
-import edu.uci.ics.crawler4j.crawler.CrawlController;
-import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
-import edu.uci.ics.crawler4j.fetcher.PageFetcher;
-import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
-import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import org.slf4j.LoggerFactory;
+
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Slf4jReporter;
+
 import io.dropwizard.lifecycle.Managed;
-import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.SiteConfiguration;
-import ru.nlp_project.story_line2.crawler.dagger.ApplicationComponent;
-import ru.nlp_project.story_line2.crawler.dagger.ApplicationModule;
-import ru.nlp_project.story_line2.crawler.dagger.DaggerApplicationComponent;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
+import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
+import ru.nlp_project.story_line2.crawler.feed_site.FeedSiteController;
+import ru.nlp_project.story_line2.crawler.parse_site.ParseSiteController;
 
 /**
  * Крулер - основной класс бизнес-логики и построения компонентов.
@@ -25,99 +34,105 @@ import ru.nlp_project.story_line2.crawler.dagger.DaggerApplicationComponent;
  *
  */
 public class Crawler implements Managed {
-
-	private static ApplicationComponent builder;
-
-	@Override
-	public void start() throws Exception {
-		initialize();
-		run();
-	}
-
-	@Override
-	public void stop() throws Exception {
-		shutdown();
-	}
-
-	private void shutdown() {
-		for (CrawlController c : controllers) {
-			c.shutdown();
-			c.waitUntilFinish();
-		}
-		mongoDBClientManager.shutdown();
-
-	}
+	public static final String METRICS_PREFIX = "crawler.";
 
 	public static Crawler newInstance(CrawlerConfiguration configuration) throws Exception {
 		Crawler result = new Crawler(configuration);
-		builder = DaggerApplicationComponent.builder()
-				.applicationModule(new ApplicationModule(configuration)).build();
+		CrawlerBuilder.setCrawlerConfiguration(configuration);
+		CrawlerBuilder.getComponent().inject(result);
 		return result;
 	}
 
 	@Inject
-	public IGroovyInterpreter groovyInterpreter;
-	private List<CrawlController> controllers;
+	MetricRegistry metricRegistry;
+
 	private CrawlerConfiguration configuration;
-	@Inject
-	public IMongoDBClient mongoDBClientManager;
+
+	private List<ParseSiteController> parseSites;
+
+	private List<FeedSiteController> feedSites;
 
 	private Crawler(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
 	private void initialize() throws Exception {
-		controllers = new ArrayList<>();
-
-		for (SiteConfiguration site : configuration.sites) {
-			CrawlConfig crawlConfig = createCrawlConfig(site);
-			CrawlController controller = createCrawlController(crawlConfig, site);
-			controllers.add(controller);
+		// parser_sites
+		parseSites = new ArrayList<>();
+		for (ParseSiteConfiguration siteConfig : configuration.parseSites) {
+			parseSites.add(new ParseSiteController(siteConfig));
 		}
-	}
 
-	WebCrawlerFactory<NewsWebCrawler> factory = new WebCrawlerFactory<NewsWebCrawler>() {
-		@Override
-		public NewsWebCrawler newInstance() throws Exception {
-			NewsWebCrawler result = new NewsWebCrawler();
-			builder.inject(result);
-			return result;
+		// feed_sites
+		feedSites = new ArrayList<>();
+		for (FeedSiteConfiguration siteConfig : configuration.feedSites) {
+			feedSites.add(new FeedSiteController(siteConfig));
 		}
-	};
 
-	private void run() {
-		if (configuration.async)
-			for (CrawlController c : controllers)
-				c.startNonBlocking(factory, configuration.crawlerPerSite);
-		else
-			for (CrawlController c : controllers)
-				c.start(factory, configuration.crawlerPerSite);
+		// initialize
+		parseSites.forEach(s -> s.initialize());
+		feedSites.forEach(s -> s.initialize());
+		// start
+		parseSites.forEach(s -> s.start());
+		feedSites.forEach(s -> s.start());
 	}
 
-	private CrawlController createCrawlController(CrawlConfig crawlConfig, SiteConfiguration site)
-			throws Exception {
-		/*
-		 * Instantiate the controller for this crawl.
-		 */
-		PageFetcher pageFetcher = new PageFetcher(crawlConfig);
-		RobotstxtConfig robotsTxtConfig = new RobotstxtConfig();
-		RobotstxtServer robotstxtServer = new RobotstxtServer(robotsTxtConfig, pageFetcher);
-		CrawlController controller = new CrawlController(crawlConfig, pageFetcher, robotstxtServer);
+	private void initializeMetricsLogging() {
+		final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
+				.outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.crawler"))
+				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter.start(1, TimeUnit.MINUTES);
 
-		/*
-		 * For each crawl, you need to add some seed urls. These are the first URLs that are fetched
-		 * and then the crawler starts following links which are found in these pages
-		 */
-		controller.addSeed(site.seed);
-		return controller;
+		final JmxReporter reporter2 = JmxReporter.forRegistry(metricRegistry).build();
+		reporter2.start();
+
 	}
 
-	private CrawlConfig createCrawlConfig(SiteConfiguration site) {
-		String crawlStorageFolder = configuration.storageDir + File.separator + site.domain;
-		CrawlConfig config = new CrawlConfig();
-		config.setCrawlStorageFolder(crawlStorageFolder);
-		config.setResumableCrawling(true);
-		return config;
+	@Override
+	public void start() throws Exception {
+		initializeMetricsLogging();
+		initializeAllTrustCert();
+		initialize();
 	}
+
+
+	// see:
+	// http://stackoverflow.com/questions/875467/java-client-certificates-over-https-ssl/876785#876785
+	private void initializeAllTrustCert() {
+		TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
+			public X509Certificate[] getAcceptedIssuers() {
+				return new X509Certificate[0];
+			}
+
+			public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+
+			public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+		}};
+
+		// Ignore differences between given hostname and certificate hostname
+		HostnameVerifier hv = new HostnameVerifier() {
+			public boolean verify(String hostname, SSLSession session) {
+				return true;
+			}
+		};
+
+		// Install the all-trusting trust manager
+		try {
+			SSLContext sc = SSLContext.getInstance("SSL");
+			sc.init(null, trustAllCerts, new SecureRandom());
+			HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+			HttpsURLConnection.setDefaultHostnameVerifier(hv);
+		} catch (Exception e) {
+		}
+
+	}
+
+	@Override
+	public void stop() throws Exception {
+		// start
+		parseSites.forEach(s -> s.stop());
+		feedSites.forEach(s -> s.stop());
+	}
+
 
 }

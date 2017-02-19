@@ -11,7 +11,6 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
@@ -97,32 +96,11 @@ public class MongoDBClientImpl implements IMongoDBClient {
 
 	private MongoCollection<DBObject> getNewsCollections() {
 		if (collection == null) {
-			MongoDatabase database = client.getDatabase("crawler");
-			collection = database.getCollection("news", DBObject.class);
+			MongoDatabase database = client.getDatabase(IMongoDBClient.DB_NAME);
+			collection = database.getCollection(IMongoDBClient.COLLECTION_NAME, DBObject.class);
 		}
 		return collection;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#dumpsAllNewsToFiles(ru.nlp_project.
-	 * story_line2.crawler.MongoDBClientManager.IDumpRecordProcessor)
-	 */
-	@Override
-	public void dumpsAllNewsToFiles(IRecordIterationProcessor reader) {
-		collection = getNewsCollections();
-		FindIterable<DBObject> find = collection.find();
-		MongoCursor<DBObject> iterator = find.iterator();
-		while (iterator.hasNext()) {
-			DBObject doc = iterator.next();
-			String domain = (String) doc.get("domain");
-			String path = (String) doc.get("path");
-			String content = (String) doc.get("content");
-			reader.processRecord(domain, path, content);
-		}
-
-
-	}
 
 }
