@@ -3,6 +3,7 @@ package ru.nlp_project.story_line2.crawler;
 import java.util.Map;
 
 import edu.uci.ics.crawler4j.url.WebURL;
+import groovy.lang.Binding;
 
 
 public interface IGroovyInterpreter {
@@ -32,5 +33,7 @@ public interface IGroovyInterpreter {
 	 */
 	Map<String, Object> extractData(String domain, WebURL webURL, String html)
 			throws IllegalStateException;
+
+	Object executeScript(String script, Binding binding) throws Exception;
 
 }

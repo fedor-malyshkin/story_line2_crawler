@@ -12,9 +12,10 @@ mongodb_connection_url: mongodb://localhost:27017/
 # Блок с настройками для анализируемых сайтов
 parse_sites:
    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
- - source: bnkomi.ru
+ #- source: bnkomi.ru
    # На каждый сайт. стартовая страница для парсинга
-   seed: http://bnkomi.ru
+ #  seed: http://bnkomi.ru
+ #  cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
 
 feed_sites:
    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)

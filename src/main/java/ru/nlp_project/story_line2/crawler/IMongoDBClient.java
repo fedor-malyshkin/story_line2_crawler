@@ -18,5 +18,5 @@ public interface IMongoDBClient {
 	 */
 	void writeNews(DBObject dbObject, String source, String path);
 
-
+	boolean isNewsExists(String source, String path);
 }

@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.uci.ics.crawler4j.url.WebURL;
+import groovy.lang.Binding;
+import groovy.lang.GroovyShell;
 import groovy.util.GroovyScriptEngine;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
@@ -118,4 +120,16 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 			throw new IllegalStateException(e);
 		}
 	}
+
+	@Override
+	public Object executeScript(String script, Binding binding) throws Exception {
+		GroovyShell shell = new GroovyShell(scriptEngine.getGroovyClassLoader(), binding);
+		return shell.evaluate(script);
+	}
+
+	
+	
+
+
+
 }

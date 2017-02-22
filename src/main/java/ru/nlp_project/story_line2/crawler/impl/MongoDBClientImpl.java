@@ -6,12 +6,14 @@ import static com.mongodb.client.model.Filters.eq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.IndexOptions;
 
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
@@ -45,6 +47,16 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	private void initialize() {
 		MongoClientURI mongoClientURI = new MongoClientURI(connectionUrl);
 		this.client = new MongoClient(mongoClientURI);
+		// create index
+		MongoCollection<DBObject> collections = getNewsCollections();
+		BasicDBObject obj = new BasicDBObject();
+		obj.put("source", 1);
+		obj.put("path", 1);
+		// uniques + bckg
+		IndexOptions ndx = new IndexOptions();
+		ndx.background(true);
+		ndx.unique(true);
+		collections.createIndex(obj, ndx);
 	}
 
 	/*
@@ -66,11 +78,10 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	@Override
 	public void writeNews(DBObject dbObject, String domain, String path) {
 		collection = getNewsCollections();
-		FindIterable<DBObject> find = collection.find(and(eq("domain", domain), eq("path", path)));
+		FindIterable<DBObject> find =
+				collection.find(and(eq("source", domain), eq("path", path))).limit(1);
 		if (find.first() != null) {
-			String msg =
-					String.format("Record for (%s:%s) already exists in MongoDB.", domain, path);
-			logger.debug(msg);
+			logger.debug("Record already exists {}:{}", domain, path);
 			// don nothing
 			return;
 		}
@@ -79,18 +90,12 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		try {
 			collection.insertOne(dbObject);
 			if (logger.isTraceEnabled()) {
-				String msg = String.format("Write record to MongoDB for (%s:%s) - '%s'.", domain,
-						path, dbObject);
-				logger.trace(msg);
+				logger.trace("Write record {}:{} - '{}'.", domain, path, dbObject);
 			} else {
-				String msg = String.format("Write record to MongoDB for (%s:%s).", domain, path,
-						dbObject);
-				logger.info(msg);
+				logger.info("Write record {}:{}.", domain, path);
 			}
-		} catch (com.mongodb.MongoException e) {
-			String msg = String.format("Exception while write record to MongoDB for (%s:%s): %s.",
-					domain, path, e.getMessage());
-			logger.error(msg);
+		} catch (Exception e) {
+			logger.error("Exception while write record {}:{}", domain, path, e);
 		}
 	}
 
@@ -100,6 +105,16 @@ public class MongoDBClientImpl implements IMongoDBClient {
 			collection = database.getCollection(IMongoDBClient.COLLECTION_NAME, DBObject.class);
 		}
 		return collection;
+	}
+
+	@Override
+	public boolean isNewsExists(String source, String path) {
+		collection = getNewsCollections();
+		FindIterable<DBObject> find =
+				collection.find(and(eq("source", source), eq("path", path))).limit(1);
+		if (find.first() != null)
+			return true;
+		return false;
 	}
 
 

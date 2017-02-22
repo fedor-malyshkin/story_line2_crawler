@@ -53,7 +53,7 @@ public class ParsersTest {
 		String content = FileUtils.readFileToString(
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.html"));
 		WebURL webURL = new WebURL();
-		webURL.setURL("www.bnkomi.ru/data/news/51840");
+		webURL.setURL("http://www.bnkomi.ru/data/news/51840");
 		Map<String, Object> data = testable.extractData("bnkomi.ru", webURL, content);
 		// 05.07.2016 19:55
 		assertEquals("Tue Jul 05 19:55:00 MSK 2016", data.get(EXTR_KEY_PUB_DATE).toString());
@@ -72,7 +72,7 @@ public class ParsersTest {
 		String content = FileUtils.readFileToString(
 				new File(htmlsDir.toString() + File.separator + "bnkomi.ru.doc.html"));
 		WebURL webURL = new WebURL();
-		webURL.setURL("www.bnkomi.ru/data/doc/51898/");
+		webURL.setURL("https://www.bnkomi.ru/data/doc/51898/");
 		Map<String, Object> data = testable.extractData("bnkomi.ru", webURL, content);
 		// 05.07.2016 19:55
 		assertEquals("Thu Jul 07 12:47:00 MSK 2016", data.get(EXTR_KEY_PUB_DATE).toString());
@@ -85,7 +85,7 @@ public class ParsersTest {
 		assertTrue(data.get(EXTR_KEY_CONTENT).toString().endsWith(
 				"2-3 уровней — при условии господдержки и с учетом наличия сырьевой базы."));
 		assertEquals(
-				"bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
+				"https://www.bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
 				data.get(EXTR_KEY_IMAGE_URL));
 	}
 }

@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 
 /**
- * Объект-конфигурация (требуется фреймворком dropwizard.io)/
+ * Объект-конфигурация (требуется фреймворком dropwizard.io)
  * 
  * @author fedor
  *
@@ -28,6 +28,14 @@ public class CrawlerConfiguration extends Configuration {
 		@NotEmpty
 		@JsonProperty(value = "cron_schedule")
 		public String cronSchedule;
+
+		@NotEmpty
+		@JsonProperty(value = "parse_for_content")
+		public boolean parseForContent;
+
+		@NotEmpty
+		@JsonProperty(value = "parse_for_image")
+		public boolean parseForImage;
 	}
 
 
@@ -39,6 +47,10 @@ public class CrawlerConfiguration extends Configuration {
 		@NotEmpty
 		@JsonProperty(value = "seed")
 		public String seed;
+
+		@NotEmpty
+		@JsonProperty(value = "cron_schedule")
+		public String cronSchedule;
 	}
 
 	@JsonProperty(value = "async")

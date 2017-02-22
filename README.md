@@ -40,10 +40,15 @@ parse_sites:
  - source: bnkomi.ru
    # На каждый сайт. стартовая страница для парсинга
    seed: http://bnkomi.ru
+   cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
 
 feed_sites:
    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
  - source: komiinform.ru
+   # Для тех сайтов, что содержат в feed'е весь контент в данном параметре выставляется 'false'
+   parse_for_content: false
+   # Для тех сайтов, что содержат в feed'е изображение в данном параметре выставляется 'false'
+   parse_for_image: false
    # На каждый сайт. стартовая страница для парсинга
    feed: http://komiinform.ru/rss/news/
    # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)

@@ -14,6 +14,7 @@ import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
+import org.quartz.Scheduler;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.JmxReporter;
@@ -44,7 +45,10 @@ public class Crawler implements Managed {
 	}
 
 	@Inject
-	MetricRegistry metricRegistry;
+	protected Scheduler scheduler;
+
+	@Inject
+	protected MetricRegistry metricRegistry;
 
 	private CrawlerConfiguration configuration;
 
@@ -52,22 +56,28 @@ public class Crawler implements Managed {
 
 	private List<FeedSiteController> feedSites;
 
+	// only for shutdowning
+	@Inject
+	protected IMongoDBClient dbClientManager;
+
 	private Crawler(CrawlerConfiguration configuration) {
 		this.configuration = configuration;
 	}
 
-	private void initialize() throws Exception {
+	private void initializeSites() throws Exception {
 		// parser_sites
 		parseSites = new ArrayList<>();
-		for (ParseSiteConfiguration siteConfig : configuration.parseSites) {
-			parseSites.add(new ParseSiteController(siteConfig));
-		}
+		if (null != configuration.parseSites)
+			for (ParseSiteConfiguration siteConfig : configuration.parseSites) {
+				parseSites.add(new ParseSiteController(siteConfig));
+			}
 
 		// feed_sites
 		feedSites = new ArrayList<>();
-		for (FeedSiteConfiguration siteConfig : configuration.feedSites) {
-			feedSites.add(new FeedSiteController(siteConfig));
-		}
+		if (null != configuration.feedSites)
+			for (FeedSiteConfiguration siteConfig : configuration.feedSites) {
+				feedSites.add(new FeedSiteController(siteConfig));
+			}
 
 		// initialize
 		parseSites.forEach(s -> s.initialize());
@@ -77,36 +87,17 @@ public class Crawler implements Managed {
 		feedSites.forEach(s -> s.start());
 	}
 
-	private void initializeMetricsLogging() {
-		final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
-				.outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.crawler"))
-				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
-		reporter.start(1, TimeUnit.MINUTES);
-
-		final JmxReporter reporter2 = JmxReporter.forRegistry(metricRegistry).build();
-		reporter2.start();
-
-	}
-
-	@Override
-	public void start() throws Exception {
-		initializeMetricsLogging();
-		initializeAllTrustCert();
-		initialize();
-	}
-
-
 	// see:
 	// http://stackoverflow.com/questions/875467/java-client-certificates-over-https-ssl/876785#876785
 	private void initializeAllTrustCert() {
 		TrustManager[] trustAllCerts = new TrustManager[] {new X509TrustManager() {
-			public X509Certificate[] getAcceptedIssuers() {
-				return new X509Certificate[0];
-			}
-
 			public void checkClientTrusted(X509Certificate[] certs, String authType) {}
 
 			public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+
+			public X509Certificate[] getAcceptedIssuers() {
+				return new X509Certificate[0];
+			}
 		}};
 
 		// Ignore differences between given hostname and certificate hostname
@@ -127,8 +118,33 @@ public class Crawler implements Managed {
 
 	}
 
+
+	private void initializeMetricsLogging() {
+		final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
+				.outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.crawler"))
+				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
+		reporter.start(1, TimeUnit.MINUTES);
+
+		final JmxReporter reporter2 = JmxReporter.forRegistry(metricRegistry).build();
+		reporter2.start();
+
+	}
+
+
+	@Override
+	public void start() throws Exception {
+		// time to startup service
+		scheduler.startDelayed(10);
+		initializeMetricsLogging();
+		initializeAllTrustCert();
+		initializeSites();
+	}
+
+
 	@Override
 	public void stop() throws Exception {
+		scheduler.shutdown(false);
+		dbClientManager.shutdown();
 		// start
 		parseSites.forEach(s -> s.stop());
 		feedSites.forEach(s -> s.stop());

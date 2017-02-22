@@ -2,7 +2,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.joda.time.format.*;
 
-public class BnkomiRU {
+public class bnkomi_ru {
 public static String domain = "bnkomi.ru"
 
 def extractData (domain, webUrl, html) {
@@ -14,7 +14,7 @@ def extractData (domain, webUrl, html) {
 	// relative path
 	// "/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg"	
 	def img = doc.select("div.pic-container img.pic").attr("src");
-	img = webUrl.parentUrl + img
+	img = ParseUtils.makeFullPath(webUrl, img)
 
 	def title = doc.select("h2.title").text();
 

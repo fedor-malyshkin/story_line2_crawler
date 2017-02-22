@@ -1,16 +1,16 @@
 package ru.nlp_project.story_line2.crawler.parse_site;
 
-import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.*;
+import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_CONTENT;
+import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_IMAGE_URL;
+import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_PUB_DATE;
+import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_TITLE;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.Date;
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +27,7 @@ import ru.nlp_project.story_line2.crawler.Crawler;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
+import ru.nlp_project.story_line2.crawler.IImageLoader;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
 import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
 import ru.nlp_project.story_line2.crawler.model.CrawlerNewsArticle;
@@ -38,16 +39,19 @@ import ru.nlp_project.story_line2.crawler.utils.BSONUtils;
  * @author fedor
  *
  */
-public class NewsWebCrawler extends WebCrawler {
+public class ParseSiteCrawler extends WebCrawler {
 
 	@Inject
-	MetricRegistry metricRegistry;
+	protected MetricRegistry metricRegistry;
 	@Inject
-	CrawlerConfiguration crawlerConfiguration;
+	protected CrawlerConfiguration crawlerConfiguration;
 	@Inject
-	public IGroovyInterpreter groovyInterpreter;
+	protected IGroovyInterpreter groovyInterpreter;
 	@Inject
-	public IMongoDBClient dbClientManager;
+	protected IMongoDBClient dbClientManager;
+	@Inject
+	protected IImageLoader imageLoader;
+
 
 	private Logger logger;
 	private Counter linkProcessed;
@@ -61,8 +65,9 @@ public class NewsWebCrawler extends WebCrawler {
 	private Counter extrEmptyContent;
 	private Counter extrEmptyPubDate;
 	private Counter extrEmptyImageUrl;
+	private Counter extrEmptyImage;
 
-	public NewsWebCrawler(ParseSiteConfiguration siteConfig) {
+	ParseSiteCrawler(ParseSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
 		logger = LoggerFactory.getLogger(this.getClass());
 	}
@@ -83,7 +88,7 @@ public class NewsWebCrawler extends WebCrawler {
 			return null;
 	}
 
-	public void initialize() {
+	void initialize() {
 		CrawlerBuilder.getComponent().inject(this);
 
 		// initialize metrics
@@ -108,6 +113,9 @@ public class NewsWebCrawler extends WebCrawler {
 				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_pub_date.count");
 		extrEmptyImageUrl = metricRegistry
 				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image_url.count");
+		extrEmptyImage = metricRegistry
+				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image.count");
+
 
 
 	}
@@ -147,11 +155,18 @@ public class NewsWebCrawler extends WebCrawler {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String html = htmlParseData.getHtml();
 
+			// skip if exists
+			if (dbClientManager.isNewsExists(siteConfig.source, webURL.getPath())) {
+				logger.trace("Record already exists - skip {}:{}", siteConfig.source,
+						webURL.getPath());
+				return;
+			}
+
 			Map<String, Object> data =
-					groovyInterpreter.extractData(webURL.getDomain(), webURL, html);
+					groovyInterpreter.extractData(siteConfig.source, webURL, html);
 			if (null == data) {
 				pagesEmpty.inc();
-				logger.trace("No content {}:{}", webURL.getDomain(), webURL.getPath());
+				logger.trace("No content {}:{}", siteConfig.source, webURL.getPath());
 				return;
 			}
 
@@ -163,6 +178,10 @@ public class NewsWebCrawler extends WebCrawler {
 			String content = getTextSafe(data, EXTR_KEY_CONTENT);
 			String imageUrl = getTextSafe(data, EXTR_KEY_IMAGE_URL);
 
+			byte[] imageData = null;
+			if (null != imageUrl && !imageUrl.isEmpty())
+				imageData = loadImage(webURL, imageUrl);
+
 			// metrics
 			if (null == publicationDate)
 				extrEmptyPubDate.inc();
@@ -172,10 +191,9 @@ public class NewsWebCrawler extends WebCrawler {
 				extrEmptyContent.inc();
 			if (null == imageUrl || imageUrl.isEmpty())
 				extrEmptyImageUrl.inc();
+			if (null == imageData)
+				extrEmptyImage.inc();
 
-			byte[] imageData = null;
-			if (null != imageUrl && !imageUrl.isEmpty())
-				imageData = loadImage(webURL, imageUrl);
 
 			try {
 				DBObject dbObject = serialize(webURL.getDomain().toLowerCase(), // domain
@@ -188,7 +206,7 @@ public class NewsWebCrawler extends WebCrawler {
 						imageUrl, // image_url
 						imageData // image
 				);
-				dbClientManager.writeNews(dbObject, webURL.getDomain(), webURL.getPath());
+				dbClientManager.writeNews(dbObject, siteConfig.source, webURL.getPath());
 			} catch (Exception e) {
 				logger.error(e.getMessage(), e);
 			}
@@ -197,11 +215,10 @@ public class NewsWebCrawler extends WebCrawler {
 
 	private byte[] loadImage(WebURL webURL, String imageUrl) {
 		try {
-			URL url = new URL(imageUrl);
-			InputStream openStream = url.openStream();
-			return IOUtils.toByteArray(openStream);
+			return imageLoader.loadImage(imageUrl);
 		} catch (IOException e) {
-			logger.error("Exception while loading image  {}:{}", webURL.getDomain(), imageUrl, e);
+			logger.error("Exception while loading image  {}:{}", siteConfig.source,
+					webURL.getPath(), e);
 			return null;
 		}
 	}
