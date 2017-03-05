@@ -7,7 +7,6 @@ node {
         $class: 'GitSCM',
         branches: [[name: '*/master']],
         doGenerateSubmoduleConfigurations: true,
-        extensions: scm.extensions + [[$class: 'SubmoduleOption', parentCredentials: true]],
         userRemoteConfigs: [[url: 'git@github.com:fedor-malyshkin/story_line2_build.git']]
         ])
 
