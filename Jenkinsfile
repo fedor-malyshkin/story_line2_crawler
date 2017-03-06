@@ -1,10 +1,11 @@
 #!groovy
 node {
+   def projectName = 'crawler'
    def gradleHome = tool name: 'gradle', type: 'gradle'
    stage('Checkout') { // for display purposes
       // Get some code from a GitHub repository
 	  // project itself
-	  checkout changelog: true, poll: true, scm: [$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'crawler']], submoduleCfg: [], userRemoteConfigs: [[url: 'git@story_line2_crawler.github.com:fedor-malyshkin/story_line2_crawler.git']]]
+	  checkout changelog: true, poll: true, scm: [$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'CleanBeforeCheckout'], [$class: 'RelativeTargetDirectory', relativeTargetDir: 'crawler']], submoduleCfg: [], userRemoteConfigs: [[url: "story_line2_${projectName}.github.com:fedor-malyshkin/story_line2_${projectName}.git"]]]
 	  // parent directory
 	  checkout changelog: true, poll: false, scm: [$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[url: 'git@story_line2_build.github.com:fedor-malyshkin/story_line2_build.git']]]
 	  // deployment
@@ -12,12 +13,12 @@ node {
    }
    stage('Assemble') {
       // Run the maven build
-     sh "'${gradleHome}/bin/gradle' -Pproject.ext.stand_type=test crawler:assemble"
+     sh "'${gradleHome}/bin/gradle' -Pproject.ext.stand_type=test ${projectName}:assemble"
    }
    stage('Test') {
-      sh "'${gradleHome}/bin/gradle' -Pproject.ext.stand_type=test crawler:test"
+      sh "'${gradleHome}/bin/gradle' -Pproject.ext.stand_type=test ${projectName}:test"
    }
    stage('Collect Reports') {
-      junit 'crawler/build/test-results/test/TEST-*.xml'
+      junit "${projectName}/build/test-results/test/TEST-*.xml"
    }
 }
