@@ -82,11 +82,11 @@ public class FeedSiteCrawler {
 	}
 
 
-	protected String getContentFromDescription(String domain, WebURL webURL,
+	protected String getContentFromDescription(String source, WebURL webURL,
 			SyndContent description) {
 		if ("text/html".equalsIgnoreCase(description.getType())) {
 			Map<String, Object> extractData =
-					groovyInterpreter.extractData(domain, webURL, description.getValue());
+					groovyInterpreter.extractData(source, webURL, description.getValue());
 			String title = (String) extractData.get(EXTR_KEY_CONTENT);
 			return title;
 		} else {
