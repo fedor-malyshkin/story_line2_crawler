@@ -160,7 +160,7 @@ public class FeedSiteCrawler {
 		String uri = entry.getUri().trim();
 		WebURL webURL = new WebURL();
 		webURL.setURL(uri);
-		String domain = webURL.getDomain();
+		String source = webURL.getDomain();
 		String path = webURL.getPath();
 		String title = entry.getTitle().trim();
 		String content = null;
@@ -212,7 +212,7 @@ public class FeedSiteCrawler {
 
 
 		try {
-			DBObject dbObject = serialize(domain, // domain
+			DBObject dbObject = serialize(source, // domain
 					path, // path
 					uri, // url
 					publicationDate, // "publication_date"
@@ -238,10 +238,10 @@ public class FeedSiteCrawler {
 		}
 	}
 
-	private DBObject serialize(String domain, String path, String url, Date publicationDate,
+	private DBObject serialize(String source, String path, String url, Date publicationDate,
 			Date processingDate, String title, String content, String imageUrl, byte[] imageData)
 			throws IOException {
-		CrawlerNewsArticle article = new CrawlerNewsArticle(domain, path, url, publicationDate,
+		CrawlerNewsArticle article = new CrawlerNewsArticle(source, path, url, publicationDate,
 				processingDate, title, content, imageUrl, imageData);
 		return BSONUtils.serialize(article);
 	}

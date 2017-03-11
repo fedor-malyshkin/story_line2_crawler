@@ -1,4 +1,4 @@
-Анализатор (паук) веб-сайтов для сбора необходимой информации и передачи на сервер проекта.
+# Анализатор (паук) веб-сайтов для сбора необходимой информации и передачи на сервер проекта.
 
 ### Общее описание
 Паук оформлен в виде микросервиса с одним конфигурационным файлом. Построен с
@@ -6,7 +6,7 @@
 
 ### Получение данных
 С учтом того, что не все сайты публикуют rss/atom-ленты приходится информацию
-с некоторых получать посредством их прямого парсинга. для этого и используется крулер (edu.uci.ics:crawler4j:4.2), полученные страницы в дальнейшем анализируются groovy скриптами, которые как определяю.т необходимость извлечения информации, так и извлекают дополнительную информацию (дату публикации, ссылку на картинку и т.д.)
+с некоторых получать посредством их прямого парсинга. для этого и используется скфцдук (edu.uci.ics:crawler4j), полученные страницы в дальнейшем анализируются groovy скриптами (проект  [crawler_scripts](https://github.com/fedor-malyshkin/story_line2_crawler_scripts)), которые как определяю.т необходимость извлечения информации, так и извлекают дополнительную информацию (дату публикации, ссылку на картинку и т.д.)
 
 С сайтами которые публикуют rss/atom-ленты тоже не всё так просто: некоторые выкладывают полное содержание статьи в ленте, другие же размещают только заголовок - в данном случае приходится идти по ссылке и там так же повторять полный анализ с извлечением данных.
 
@@ -21,7 +21,7 @@
 
 ### Конфигурационный файл
 Далее описана структура конфигурационного файла
-```{yaml}
+```yaml
 ---
 # Количество потоков на сайт (лучше не более 4)
 crawler_per_site: 1
@@ -62,17 +62,48 @@ feed_sites:
 Уникальность записи в БД определяется на основании пары - (domain:URL)
 Запись по умолчанию производится в базу данных mongodb "crawler" (коллекция "crawler_entries")
 Формат записи следующий:
-```{json}
+```json
 {
-	"_id" : ObjectId("587cbc11aca9f3482120b052"),
-	"publication_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
+    "_id" : ObjectId("587cbc11aca9f3482120b052"),
+    "publication_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
 	"processing_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
 	"content" : "Около ... фактическим исполнением.",
-	"path" : "/data/news/58212/",
-	"source" : "bnkomi.ru",
-	"title" : "Сыктывкарец ради отпуска за границей полностью погасил долг по кредиту",
-	"image_url" : "bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
-	"image_data" : ........,
-	"url" : "https://www.bnkomi.ru/data/news/58212/"
+    "path" : "/data/news/58212/",
+    "source" : "bnkomi.ru",
+    "title" : "Сыктывкарец ради отпуска за границей полностью погасил долг по кредиту",
+    "image_url" : "bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
+    "image_data" : ........,
+    "url" : "https://www.bnkomi.ru/data/news/58212/"
 }
 ```
+
+# Интерпретация и структура скриптов для анализа.
+Основной класс для анализа и исполнения скриптов: "ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl", который ожидает найти скрипты в каталоге из переменной "crawler_script_dir".
+
+Каждый скрипт - groovy-скрипт, определённой структуры. Примерная структура каждого скрипта такова:
+```groovy
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.joda.time.format.*;
+
+public class bnkomi_ru {
+	public static String source = "bnkomi.ru"
+
+	def extractData (source, webUrl, html) {
+		// ...
+		return [ 'title':title, 'publication_date':date, 'content':content, 'image_url':img ]
+	}
+
+	def shouldVisit(url)
+	{
+		// ...
+    	return true;
+	}
+}
+```
+К скриптам предъявляются следующие условия:
+1. имя класса (в данном случае "bnkomi_ru") должно совпадать с именем файла + ".groovy" (в данном случае будет "bnkomi_ru.groovy"). Общая рекомендация: приводить к нижнему регистру и заменять точку на знак подчёркивания.
+1. должны пристутствовать 2 публичных метода:
+  - Map<String, Object> extractData(String domain, WebURL webURL, String html)
+  - boolean shouldVisit(String domain, WebURL webURL)
+1. должен присутствовать публичный статический член (public static) типа "String" с именем "source"

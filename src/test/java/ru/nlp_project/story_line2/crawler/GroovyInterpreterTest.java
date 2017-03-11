@@ -1,72 +1,100 @@
 package ru.nlp_project.story_line2.crawler;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.io.filefilter.IOFileFilter;
+import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+import static org.hamcrest.core.IsEqual.*;
+
 import edu.uci.ics.crawler4j.url.WebURL;
-import groovy.util.ResourceException;
-import groovy.util.ScriptException;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 
 public class GroovyInterpreterTest {
 
+	private static File srcDir =
+			new File("src/test/groovy/ru/nlp_project/story_line2/crawler/parser");
 	private static Path scriptDir;
-
-	@BeforeClass
-	public static void setUpClass() throws IOException {
-		scriptDir = Files.createTempDirectory("crawler");
-		FileUtils.forceDeleteOnExit(scriptDir.toFile());
-		FileUtils.copyDirectory(
-				new File("src/main/groovy/ru/nlp_project/story_line2/crawler/parser"),
-				scriptDir.toFile());
-
-	}
-
 	private IGroovyInterpreter testable;
+	private CrawlerConfiguration configuration;
 
 	@Before
 	public void setUp() throws Exception {
-		CrawlerConfiguration configuration = new CrawlerConfiguration();
+		scriptDir = Files.createTempDirectory("crawler");
+		configuration = new CrawlerConfiguration();
 		configuration.scriptDir = scriptDir.toString();
+	}
+
+	@After
+	public void tearDown() throws IOException {
+		FileUtils.forceDelete(scriptDir.toFile());
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testInitializeWithNonExistingScriptDir() {
+		configuration.scriptDir = "/tmp/NON_EXISTING_DIR";
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 
-	@Test
-	public void testShouldVisit() throws IOException, ResourceException, ScriptException,
-			NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, InstantiationException {
-		WebURL webURL = new WebURL();
-		webURL.setURL("http://www.bnkomi.ru");
-		assertTrue(testable.shouldVisit("bnkomi.ru", webURL));
+	@Test(expected = IllegalStateException.class)
+	public void testInitializeWithNonEmptyScriptDir() {
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+	}
+
+	@Test(expected = IllegalStateException.class)
+	public void testGetSourceFromScriptClass_NoSource() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("non_existing_source");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 
 
 	@Test
-	public void testShouldVisit_WrongDomain() throws IOException, ResourceException,
-			ScriptException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, InstantiationException {
-		assertFalse(testable.shouldVisit("xxxxx.ru", null));
-	}
-
-	@Test()
-	public void testShouldVisit_WrongException() throws IOException, ResourceException,
-			ScriptException, NoSuchMethodException, SecurityException, IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, InstantiationException {
+	public void testCallExtractData() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
-		webURL.setURL("http://www.bnkomi.ru/1.png");
-		assertFalse(testable.shouldVisit("bnkomi.ru", webURL));
+		webURL.setURL("http://working_script");
+		testable.extractData("working_script", webURL, "");
+	}
+
+	@Test
+	public void testCallShouldVisit() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		testable.shouldVisit("working_script", webURL);
 	}
 
 
+	@Test
+	@Ignore
+	public void testAutoRefreshGroovyCode() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		Map<String, Object> extractData = testable.extractData("working_script", webURL, "");
+		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title"));		
+		
+		File fileSource = new File(srcDir, "new_working_script.groovy");
+		File dstSource = new File(scriptDir.toFile(), "working_script.groovy");
+		
+		FileUtils.copyFile(fileSource, dstSource);
+		extractData = testable.extractData("working_script", webURL, "");
+		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title2"));
+	}
 }

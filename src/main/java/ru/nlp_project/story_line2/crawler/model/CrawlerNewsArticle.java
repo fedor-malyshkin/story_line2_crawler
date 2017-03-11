@@ -12,14 +12,14 @@ public class CrawlerNewsArticle {
 		super();
 	}
 
-	public CrawlerNewsArticle(String domain, String path, String url, Date publicationDate,
+	public CrawlerNewsArticle(String source, String path, String url, Date publicationDate,
 			Date processingDate, String title, String content, String imageUrl, byte[] imageData) {
 		super();
 		this.publicationDate = publicationDate;
 		this.processingDate = processingDate;
 		this.content = content;
 		this.path = path;
-		this.domain = domain;
+		this.source = source;
 		this.title = title;
 		this.url = url;
 		this.imageUrl = imageUrl;
@@ -52,7 +52,7 @@ public class CrawlerNewsArticle {
 	 * домен сайта (без протокола)
 	 */
 	@JsonProperty("source")
-	String domain;
+	String source;
 	/**
 	 * заголовок новости/статьи
 	 */

@@ -120,10 +120,10 @@ public class ParseSiteCrawler extends WebCrawler {
 
 	}
 
-	private DBObject serialize(String domain, String path, String url, Date publicationDate,
+	private DBObject serialize(String source, String path, String url, Date publicationDate,
 			Date processingDate, String title, String content, String imageUrl, byte[] imageData)
 			throws IOException {
-		CrawlerNewsArticle article = new CrawlerNewsArticle(domain, path, url, publicationDate,
+		CrawlerNewsArticle article = new CrawlerNewsArticle(source, path, url, publicationDate,
 				processingDate, title, content, imageUrl, imageData);
 		return BSONUtils.serialize(article);
 	}
@@ -141,6 +141,12 @@ public class ParseSiteCrawler extends WebCrawler {
 		linkProcessed.inc();
 		// в случае если страница будет отвергнута -- она не будет проанализирована и самой
 		// библиотекой
+		
+		// необходимо учитывать, что тут может возникнуть ситуация, когда в анализируемом сайте 
+		// имеем ссылку на другой сайт в анализе и в таком случае надо ответить "нет" - нужные
+		// данные лишь для основного сайта, другие данные получим в другом парсере
+		if (url.getDomain().toLowerCase()!= siteConfig.source) return false;
+		
 		return groovyInterpreter.shouldVisit(url.getDomain(), url);
 	}
 
