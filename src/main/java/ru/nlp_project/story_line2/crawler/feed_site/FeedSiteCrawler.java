@@ -85,6 +85,7 @@ public class FeedSiteCrawler {
 	protected String getContentFromDescription(String source, WebURL webURL,
 			SyndContent description) {
 		if ("text/html".equalsIgnoreCase(description.getType())) {
+			// в данном случае просто убираем тэги из HTML
 			Map<String, Object> extractData =
 					groovyInterpreter.extractData(source, webURL, description.getValue());
 			String title = (String) extractData.get(EXTR_KEY_CONTENT);
