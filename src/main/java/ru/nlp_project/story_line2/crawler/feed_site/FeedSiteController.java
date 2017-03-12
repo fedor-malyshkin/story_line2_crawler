@@ -23,8 +23,6 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.MetricRegistry;
-
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
@@ -57,8 +55,6 @@ public class FeedSiteController {
 	@Inject
 	protected Scheduler scheduler;
 
-	@Inject
-	protected MetricRegistry metricRegistry;
 
 	@Inject
 	protected CrawlerConfiguration crawlerConfiguration;

@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.mongodb.DBObject;
 import com.rometools.rome.feed.synd.SyndContent;
@@ -61,7 +60,6 @@ public class FeedSiteCrawler {
 	private Counter pagesProcessed;
 	private Counter pagesEmpty;
 	private Counter pagesFull;
-	private Meter pagesFullFreq;
 
 	FeedSiteCrawler(FeedSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
@@ -121,30 +119,26 @@ public class FeedSiteCrawler {
 
 	protected void initializeMetrics() {
 		// initialize metrics
-		String siteMetrics = siteConfig.source.replace(".", "_");
+		String escapedSource = siteConfig.source.replace(".", "_");
 
 		// extraction quality
 		pagesProcessed = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.pages.count");
+				.counter("processed_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		pagesEmpty = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.empty_pages.count");
+				.counter("processed_empty_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		pagesFull = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.full_pages.count");
-		pagesFullFreq = metricRegistry
-				.meter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.full_pages.freq");
-
-
+				.counter("processed_full_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 
 		extrEmptyTitle = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_title.count");
+				.counter("extracted_empty_title" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyContent = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_content.count");
+				.counter("extracted_empty_content" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyPubDate = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_pub_date.count");
-		extrEmptyImageUrl = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image_url.count");
-		extrEmptyImage = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image.count");
+				.counter("extracted_empty_pub_date" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		extrEmptyImageUrl = metricRegistry.counter(
+				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		extrEmptyImage = metricRegistry.counter(
+				"extracted_empty_image_count" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 	}
 
 
@@ -173,7 +167,7 @@ public class FeedSiteCrawler {
 			logger.trace("Record already exists - skip {}:{}", siteConfig.source, webURL.getPath());
 			return;
 		}
-		
+
 		pagesProcessed.inc();
 
 		if (!siteConfig.parseForContent) {
@@ -188,7 +182,6 @@ public class FeedSiteCrawler {
 			return;
 		}
 		pagesFull.inc();
-		pagesFullFreq.mark();
 
 		if (!siteConfig.parseForContent && !siteConfig.parseForImage) {
 			imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());

@@ -58,7 +58,6 @@ public class ParseSiteCrawler extends WebCrawler {
 	private Counter pagesProcessed;
 	private Counter pagesEmpty;
 	private Counter pagesFull;
-	private Meter pagesFullFreq;
 
 	private ParseSiteConfiguration siteConfig;
 	private Counter extrEmptyTitle;
@@ -92,29 +91,28 @@ public class ParseSiteCrawler extends WebCrawler {
 		CrawlerBuilder.getComponent().inject(this);
 
 		// initialize metrics
-		String siteMetrics = siteConfig.source.replace(".", "_");
+		String escapedSource = siteConfig.source.replace(".", "_");
+
 		linkProcessed = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.link.count");
+				.counter("processed_link" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		pagesProcessed = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.pages.count");
+				.counter("processed_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		pagesEmpty = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.empty_pages.count");
+				.counter("processed_empty_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		pagesFull = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.full_pages.count");
-		pagesFullFreq = metricRegistry
-				.meter(Crawler.METRICS_PREFIX + siteMetrics + ".processed.full_pages.freq");
+				.counter("processed_full_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 
 		// extraction quality
 		extrEmptyTitle = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_title.count");
+				.counter("extracted_empty_title" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyContent = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_content.count");
+				.counter("extracted_empty_content" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyPubDate = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_pub_date.count");
-		extrEmptyImageUrl = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image_url.count");
+				.counter("extracted_empty_pub_date" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		extrEmptyImageUrl = metricRegistry.counter(
+				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyImage = metricRegistry
-				.counter(Crawler.METRICS_PREFIX + siteMetrics + ".extracted.empty_image.count");
+				.counter("extracted_empty_image" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 
 
 
@@ -141,12 +139,13 @@ public class ParseSiteCrawler extends WebCrawler {
 		linkProcessed.inc();
 		// в случае если страница будет отвергнута -- она не будет проанализирована и самой
 		// библиотекой
-		
-		// необходимо учитывать, что тут может возникнуть ситуация, когда в анализируемом сайте 
+
+		// необходимо учитывать, что тут может возникнуть ситуация, когда в анализируемом сайте
 		// имеем ссылку на другой сайт в анализе и в таком случае надо ответить "нет" - нужные
 		// данные лишь для основного сайта, другие данные получим в другом парсере
-		if (url.getDomain().toLowerCase()!= siteConfig.source) return false;
-		
+		if (!siteConfig.source.equalsIgnoreCase(url.getDomain()))
+			return false;
+
 		return groovyInterpreter.shouldVisit(url.getDomain(), url);
 	}
 
@@ -177,7 +176,6 @@ public class ParseSiteCrawler extends WebCrawler {
 			}
 
 			pagesFull.inc();
-			pagesFullFreq.mark();
 
 			Date publicationDate = getDateSafe(data, EXTR_KEY_PUB_DATE);
 			String title = getTextSafe(data, EXTR_KEY_TITLE);

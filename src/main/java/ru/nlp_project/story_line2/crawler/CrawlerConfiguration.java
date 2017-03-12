@@ -53,6 +53,39 @@ public class CrawlerConfiguration extends Configuration {
 		public String cronSchedule;
 	}
 
+	public static class MetricsConfiguration {
+		// enabled: true
+		@NotEmpty
+		@JsonProperty(value = "enabled")
+		public boolean enabled = false;
+
+		// influxdb_host: ""
+		@JsonProperty(value = "influxdb_host")
+		public String influxdbHost;
+
+
+		// influxdb_port: ""
+		@JsonProperty(value = "influxdb_port")
+		public int influxdbPort;
+
+		// influxdb_db: ""
+		@JsonProperty(value = "influxdb_db")
+		public String influxdbDB;
+
+		// influxdb_user: ""
+		@JsonProperty(value = "influxdb_user")
+		public String influxdbUser;
+
+		// influxdb_password: ""
+		@JsonProperty(value = "influxdb_password")
+		public String influxdbPassword;
+
+		// reporting_period: 30
+		@NotEmpty
+		@JsonProperty(value = "reporting_period")
+		public int reportingPeriod;
+	}
+
 	@JsonProperty(value = "async")
 	public boolean async = true;
 	@JsonProperty(value = "crawler_per_site")
@@ -64,6 +97,9 @@ public class CrawlerConfiguration extends Configuration {
 	public ArrayList<ParseSiteConfiguration> parseSites = new ArrayList<>();
 	@JsonProperty(value = "feed_sites")
 	public ArrayList<FeedSiteConfiguration> feedSites = new ArrayList<>();
+
+	@JsonProperty(value = "metrics")
+	public MetricsConfiguration metrics = new MetricsConfiguration();
 
 	@NotEmpty
 	@JsonProperty(value = "crawler_storage_dir")

@@ -27,8 +27,6 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.MetricRegistry;
-
 import edu.uci.ics.crawler4j.crawler.CrawlConfig;
 import edu.uci.ics.crawler4j.crawler.CrawlController;
 import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
@@ -54,7 +52,8 @@ public class ParseSiteController {
 					siteController.executeSheduledJob(context);
 			} catch (Exception e) {
 				// do nothing in any case
-				// see: http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
+				// see:
+				// http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
 			}
 		}
 
@@ -67,10 +66,7 @@ public class ParseSiteController {
 
 
 	@Inject
-	protected 	Scheduler scheduler;
-
-	@Inject
-	protected MetricRegistry metricRegistry;
+	protected Scheduler scheduler;
 
 	@Inject
 	protected CrawlerConfiguration crawlerConfiguration;

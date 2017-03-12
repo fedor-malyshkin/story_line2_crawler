@@ -57,6 +57,14 @@ feed_sites:
 ### Журналирование
 
 ### Метрики
+metrics:
+   enabled: false
+   influxdb_host: ""
+   influxdb_port: 8086
+   influxdb_db: ""
+   influxdb_user: ""
+   influxdb_password: ""
+   reporting_period: 30
 
 ### Запись в БД
 Уникальность записи в БД определяется на основании пары - (domain:URL)
