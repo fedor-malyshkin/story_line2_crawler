@@ -98,7 +98,7 @@ public class CrawlerConfiguration extends Configuration {
 	@JsonProperty(value = "feed_sites")
 	public ArrayList<FeedSiteConfiguration> feedSites = new ArrayList<>();
 
-	@JsonProperty(value = "metrics")
+	@JsonProperty(value = "influxdb_metrics")
 	public MetricsConfiguration metrics = new MetricsConfiguration();
 
 	@NotEmpty

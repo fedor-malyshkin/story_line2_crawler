@@ -57,7 +57,7 @@ feed_sites:
 ### Журналирование
 
 ### Метрики
-metrics:
+influxdb_metrics:
    enabled: false
    influxdb_host: ""
    influxdb_port: 8086

@@ -8,7 +8,6 @@ import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
 
 import com.codahale.metrics.MetricRegistry;
-import com.mongodb.DBObject;
 
 import dagger.Module;
 import dagger.Provides;
@@ -18,6 +17,7 @@ import ru.nlp_project.story_line2.crawler.IImageLoader;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 import ru.nlp_project.story_line2.crawler.impl.ImageLoaderImpl;
+import ru.nlp_project.story_line2.crawler.impl.MongoDBClientImpl;
 
 @Module
 public class CrawlerModule {
@@ -39,7 +39,8 @@ public class CrawlerModule {
 	@Provides
 	@Singleton
 	public IMongoDBClient provideMongoDBClient() {
-		// return MongoDBClientImpl.newInstance(configuration);
+		return MongoDBClientImpl.newInstance(configuration);
+		/*
 		return new IMongoDBClient() {
 
 			@Override
@@ -56,6 +57,7 @@ public class CrawlerModule {
 
 
 		};
+		*/
 	}
 
 	@Provides

@@ -23,14 +23,14 @@ feed_sites:
    # На каждый сайт. стартовая страница для парсинга
    feed: http://komiinform.ru/rss/news/
    # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
-   cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
+   cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
 
 # metrics
-metrics:
+influxdb_metrics:
    enabled: false
-   influxdb_host: ""
+   influxdb_host: "ci.nlp-project.ru"
    influxdb_port: 8086	
-   influxdb_db: ""
+   influxdb_db: "storyline"
    influxdb_user: ""
    influxdb_password: ""
    reporting_period: 30
