@@ -60,6 +60,7 @@ public class FeedSiteCrawler {
 	private Counter pagesProcessed;
 	private Counter pagesEmpty;
 	private Counter pagesFull;
+	private Counter bytesWritten;
 
 	FeedSiteCrawler(FeedSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
@@ -139,6 +140,9 @@ public class FeedSiteCrawler {
 				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyImage = metricRegistry.counter(
 				"extracted_empty_image_count" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		bytesWritten = metricRegistry.counter(
+				"written_bytes_to_db" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+
 	}
 
 
@@ -217,6 +221,7 @@ public class FeedSiteCrawler {
 					imageData // image
 			);
 			dbClientManager.writeNews(dbObject, siteConfig.source, webURL.getPath());
+
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
 		}

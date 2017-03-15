@@ -65,6 +65,7 @@ public class ParseSiteCrawler extends WebCrawler {
 	private Counter extrEmptyPubDate;
 	private Counter extrEmptyImageUrl;
 	private Counter extrEmptyImage;
+	private Counter bytesWritten;
 
 	ParseSiteCrawler(ParseSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
@@ -113,6 +114,8 @@ public class ParseSiteCrawler extends WebCrawler {
 				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyImage = metricRegistry
 				.counter("extracted_empty_image" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		bytesWritten = metricRegistry.counter(
+				"written_bytes_to_db" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 
 
 
