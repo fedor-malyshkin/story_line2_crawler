@@ -89,11 +89,7 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		// Document document = Document.parse(json);
 		try {
 			collection.insertOne(dbObject);
-			if (logger.isTraceEnabled()) {
-				logger.trace("Write record {}:{} - '{}'.", domain, path, dbObject);
-			} else {
-				logger.info("Write record {}:{}.", domain, path);
-			}
+			logger.info("Write record {}:{}.", domain, path);
 		} catch (Exception e) {
 			logger.error("Exception while write record {}:{}", domain, path, e);
 		}

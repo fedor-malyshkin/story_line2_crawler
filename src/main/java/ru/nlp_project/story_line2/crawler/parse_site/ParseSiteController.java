@@ -128,7 +128,7 @@ public class ParseSiteController {
 		CrawlConfig config = new CrawlConfig();
 		config.setCrawlStorageFolder(crawlStorageFolder);
 		config.setResumableCrawling(true);
-		// config.setPolitenessDelay(10);
+		config.setPolitenessDelay(100);
 		return config;
 	}
 

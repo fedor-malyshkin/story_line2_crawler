@@ -50,7 +50,7 @@ public class FeedSiteCrawler {
 	@Inject
 	protected IImageLoader imageLoader;
 
-	private Logger logger;
+	private Logger log;
 	private FeedSiteConfiguration siteConfig;
 	private Counter extrEmptyTitle;
 	private Counter extrEmptyContent;
@@ -64,7 +64,7 @@ public class FeedSiteCrawler {
 
 	FeedSiteCrawler(FeedSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
-		logger = LoggerFactory.getLogger(this.getClass());
+		log = LoggerFactory.getLogger(this.getClass());
 	}
 
 
@@ -76,7 +76,7 @@ public class FeedSiteCrawler {
 			String feed = getFeed();
 			parseFeed(feed);
 		} catch (Exception e) {
-			logger.error("Error while crawling {}:{}", siteConfig.source, siteConfig.feed, e);
+			log.error("Error while crawling {}:{}", siteConfig.source, siteConfig.feed, e);
 		}
 	}
 
@@ -168,7 +168,7 @@ public class FeedSiteCrawler {
 
 		// skip if exists
 		if (dbClientManager.isNewsExists(siteConfig.source, webURL.getPath())) {
-			logger.trace("Record already exists - skip {}:{} ({})", siteConfig.source,
+			log.debug("Record already exists - skip {}:{} ({})", siteConfig.source,
 					webURL.getPath(), webURL.getURL());
 			return;
 		}
@@ -187,7 +187,7 @@ public class FeedSiteCrawler {
 
 		if (null == content) {
 			pagesEmpty.inc();
-			logger.trace("No content {}:{} ({})", siteConfig.source, webURL.getPath(), webURL.getURL());
+			log.debug("No content {}:{} ({})", siteConfig.source, webURL.getPath(), webURL.getURL());
 			return;
 		}
 		pagesFull.inc();
@@ -228,7 +228,7 @@ public class FeedSiteCrawler {
 			dbClientManager.writeNews(dbObject, siteConfig.source, webURL.getPath());
 
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 		}
 	}
 
@@ -236,7 +236,7 @@ public class FeedSiteCrawler {
 		try {
 			return imageLoader.loadImage(imageUrl);
 		} catch (IOException e) {
-			logger.error("Exception while loading image  {}:{}", siteConfig.source,
+			log.error("Exception while loading image  {}:{}", siteConfig.source,
 					webURL.getPath(), e);
 			return null;
 		}

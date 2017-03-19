@@ -163,7 +163,7 @@ public class ParseSiteCrawler extends WebCrawler {
 
 			// skip if exists
 			if (dbClientManager.isNewsExists(siteConfig.source, webURL.getPath())) {
-				logger.trace("Record already exists - skip {}:{} ({})", siteConfig.source,
+				logger.debug("Record already exists - skip {}:{} ({})", siteConfig.source,
 						webURL.getPath(), webURL.getURL());
 				return;
 			}
@@ -177,7 +177,7 @@ public class ParseSiteCrawler extends WebCrawler {
 					groovyInterpreter.extractData(siteConfig.source, webURL, html);
 			if (null == data) {
 				pagesEmpty.inc();
-				logger.trace("No content {}:{} ({})", siteConfig.source, webURL.getPath(),
+				logger.debug("No content {}:{} ({})", siteConfig.source, webURL.getPath(),
 						webURL.getURL());
 				return;
 			}
