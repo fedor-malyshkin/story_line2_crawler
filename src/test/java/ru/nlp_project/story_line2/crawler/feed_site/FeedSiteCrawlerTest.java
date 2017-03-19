@@ -37,7 +37,7 @@ public class FeedSiteCrawlerTest {
 		testable.dbClientManager = mongoDBClient;
 		testable.groovyInterpreter = groovyInterpreter;
 		testable.imageLoader = imageLoader;
-		testable.metricRegistry = new MetricRegistry(); 
+		testable.metricRegistry = new MetricRegistry();
 		testable.initializeMetrics();
 	}
 
@@ -55,10 +55,38 @@ public class FeedSiteCrawlerTest {
 		when(imageLoader.loadImage(anyString())).thenReturn(new byte[] {});
 		when(mongoDBClient.isNewsExists(anyString(), anyString())).thenReturn(false);
 		when(groovyInterpreter.extractData(anyString(), any(), anyString())).thenReturn(extrData);
+		when(groovyInterpreter.shouldVisit(anyString(), any())).thenReturn(true);
 
 		testable.parseFeed(feed);
 
 		verify(mongoDBClient, times(20)).writeNews(any(), any(), any());
+	}
+
+	/**
+	 * |Проверка случая, когда в базе парсера набрано уже много ссылок не нужных и откорректированы
+	 * скрипты, которые говорят, что их посещать не надо.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void test_parseFeed_WithShouldVisitReturnsFalse() throws Exception {
+		FileInputStream inputStream = new FileInputStream(
+				"src/test/resources/ru/nlp_project/story_line2/crawler/feed_site/komiinform.rss");
+		String feed = IOUtils.toString(inputStream);
+		siteConfiguration.parseForContent = false;
+		siteConfiguration.parseForImage = false;
+
+		HashMap<String, Object> extrData = new HashMap<>();
+		extrData.put(EXTR_KEY_CONTENT, "test_contnt");
+
+		when(imageLoader.loadImage(anyString())).thenReturn(new byte[] {});
+		when(mongoDBClient.isNewsExists(anyString(), anyString())).thenReturn(false);
+		when(groovyInterpreter.extractData(anyString(), any(), anyString())).thenReturn(extrData);
+		when(groovyInterpreter.shouldVisit(anyString(), any())).thenReturn(false);
+
+		testable.parseFeed(feed);
+
+		verify(mongoDBClient, never()).writeNews(any(), any(), any());
 	}
 
 }

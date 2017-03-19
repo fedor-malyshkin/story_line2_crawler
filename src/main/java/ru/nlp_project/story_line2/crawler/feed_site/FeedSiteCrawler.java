@@ -168,12 +168,17 @@ public class FeedSiteCrawler {
 
 		// skip if exists
 		if (dbClientManager.isNewsExists(siteConfig.source, webURL.getPath())) {
-			logger.trace("Record already exists - skip {}:{}", siteConfig.source, webURL.getPath());
+			logger.trace("Record already exists - skip {}:{} ({})", siteConfig.source,
+					webURL.getPath(), webURL.getURL());
 			return;
 		}
 
-		pagesProcessed.inc();
+		// если ранне набрали ссылок в базу, то теперь можно дополнительно проверить с
+		// актуальной версией скриптов - нужно ли посещать страницу
+		if (!groovyInterpreter.shouldVisit(webURL.getDomain(), webURL))
+			return;
 
+		pagesProcessed.inc();
 		if (!siteConfig.parseForContent) {
 			content = getContentFromDescription(siteConfig.source, webURL, entry.getDescription());
 		} else {
@@ -182,7 +187,7 @@ public class FeedSiteCrawler {
 
 		if (null == content) {
 			pagesEmpty.inc();
-			logger.trace("No content {}:{}", siteConfig.source, webURL.getPath());
+			logger.trace("No content {}:{} ({})", siteConfig.source, webURL.getPath(), webURL.getURL());
 			return;
 		}
 		pagesFull.inc();

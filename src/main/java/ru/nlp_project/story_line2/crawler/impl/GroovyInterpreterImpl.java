@@ -36,10 +36,10 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	private static final String SCRIPT_EXTRACT_DATA_METHOD_NAME = "extractData";
 	private GroovyScriptEngine scriptEngine;
 	private HashMap<String, Class<?>> sourceMap;
-	private Logger logger;
+	private Logger log;
 
 	private GroovyInterpreterImpl() {
-		logger = LoggerFactory.getLogger(this.getClass());
+		log = LoggerFactory.getLogger(this.getClass());
 	}
 
 	public static GroovyInterpreterImpl newInstance(CrawlerConfiguration configuration)
@@ -69,14 +69,16 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 				Class<?> scriptClass = loadScriptClassByName(file);
 				String source = getSourceFromScriptClass(scriptClass);
 				sourceMap.put(source.toLowerCase(), scriptClass);
+				log.debug("Loaded script '{}' for '{}'.", file.getName(), source);
 			}
 		} catch (Exception e) {
-			logger.error(e.getMessage(), e);
+			log.error(e.getMessage(), e);
 			throw new IllegalStateException(e);
 		}
 	}
 
-	protected GroovyScriptEngine createGroovyScriptEngine(CrawlerConfiguration configuration) throws IOException {
+	protected GroovyScriptEngine createGroovyScriptEngine(CrawlerConfiguration configuration)
+			throws IOException {
 		GroovyScriptEngine result = new GroovyScriptEngine(configuration.scriptDir);
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setRecompileGroovySource(true);
@@ -126,8 +128,8 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 			Boolean result = (Boolean) method.invoke(instance, webURL);
 			return result.booleanValue();
 		} catch (Exception e) {
-			logger.error("Exception while processing 'shouldVisit' ({}, {})", source,
-					webURL.getPath(), e);
+			log.error("Exception while processing 'shouldVisit' ({}, {})", source, webURL.getPath(),
+					e);
 			throw new IllegalStateException(e);
 		}
 	}
@@ -146,7 +148,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 		if (webURL == null)
 			throw new IllegalArgumentException("webURL is null.");
 		if (!sourceMap.containsKey(source.toLowerCase())) {
-			logger.error("No script with 'extractData' for source: '{}'", source);
+			log.error("No script with 'extractData' for source: '{}'", source);
 			throw new IllegalArgumentException("No script for domain: " + source);
 		}
 
@@ -160,7 +162,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 					(Map<String, Object>) method.invoke(instance, source, webURL, html);
 			return result;
 		} catch (Exception e) {
-			logger.error("Exception while processing {}:{}", source, webURL.getPath(), e);
+			log.error("Exception while processing {}:{}", source, webURL.getPath(), e);
 			throw new IllegalStateException(e);
 		}
 	}

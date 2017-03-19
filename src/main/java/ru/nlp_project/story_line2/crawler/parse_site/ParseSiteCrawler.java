@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.mongodb.DBObject;
 
@@ -114,8 +113,8 @@ public class ParseSiteCrawler extends WebCrawler {
 				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 		extrEmptyImage = metricRegistry
 				.counter("extracted_empty_image" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		bytesWritten = metricRegistry.counter(
-				"written_bytes_to_db" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		bytesWritten = metricRegistry
+				.counter("written_bytes_to_db" + "." + escapedSource + Crawler.METRICS_SUFFIX);
 
 
 
@@ -157,7 +156,6 @@ public class ParseSiteCrawler extends WebCrawler {
 	 */
 	@Override
 	public void visit(Page page) {
-		pagesProcessed.inc();
 		WebURL webURL = page.getWebURL();
 		if (page.getParseData() instanceof HtmlParseData) {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
@@ -165,16 +163,22 @@ public class ParseSiteCrawler extends WebCrawler {
 
 			// skip if exists
 			if (dbClientManager.isNewsExists(siteConfig.source, webURL.getPath())) {
-				logger.trace("Record already exists - skip {}:{}", siteConfig.source,
-						webURL.getPath());
+				logger.trace("Record already exists - skip {}:{} ({})", siteConfig.source,
+						webURL.getPath(), webURL.getURL());
 				return;
 			}
 
+			// если ранне набрали ссылок в базу, то теперь можно дополнительно проверить с
+			// актуальной версией скриптов - нужно ли посещать страницу
+			if (!groovyInterpreter.shouldVisit(webURL.getDomain(), webURL))
+				return;
+			pagesProcessed.inc();			
 			Map<String, Object> data =
 					groovyInterpreter.extractData(siteConfig.source, webURL, html);
 			if (null == data) {
 				pagesEmpty.inc();
-				logger.trace("No content {}:{}", siteConfig.source, webURL.getPath());
+				logger.trace("No content {}:{} ({})", siteConfig.source, webURL.getPath(),
+						webURL.getURL());
 				return;
 			}
 
