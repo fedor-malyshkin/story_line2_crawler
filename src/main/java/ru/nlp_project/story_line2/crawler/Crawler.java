@@ -19,7 +19,6 @@ import javax.net.ssl.X509TrustManager;
 import org.quartz.Scheduler;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;

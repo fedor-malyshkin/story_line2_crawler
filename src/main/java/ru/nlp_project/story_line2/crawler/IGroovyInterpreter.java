@@ -13,7 +13,7 @@ public interface IGroovyInterpreter {
 	public static final String EXTR_KEY_CONTENT = "content";
 
 	/**
-	 * Проверить необходимость посещения сайта.
+	 * Проверить необходимость посещения страницы.
 	 * 
 	 * @param source источник данных
 	 * @param webURL ссылка на страницу
@@ -51,5 +51,16 @@ public interface IGroovyInterpreter {
 	 * @throws Exception
 	 */
 	Object executeScript(String script, Binding binding) throws Exception;
+
+	
+	/**
+	 * Проверить необходимость обработки страницы.
+	 * 
+	 * @param source источник данных
+	 * @param webURL ссылка на страницу
+	 * @return
+	 * @throws IllegalStateException
+	 */
+	boolean shouldProcess(String source, WebURL url);
 
 }

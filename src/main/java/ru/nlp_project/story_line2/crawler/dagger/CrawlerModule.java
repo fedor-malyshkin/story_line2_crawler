@@ -12,9 +12,11 @@ import com.codahale.metrics.MetricRegistry;
 import dagger.Module;
 import dagger.Provides;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
+import ru.nlp_project.story_line2.crawler.IContentProcessor;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 import ru.nlp_project.story_line2.crawler.IImageLoader;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
+import ru.nlp_project.story_line2.crawler.impl.ContentProcessorImpl;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 import ru.nlp_project.story_line2.crawler.impl.ImageLoaderImpl;
 import ru.nlp_project.story_line2.crawler.impl.MongoDBClientImpl;
@@ -40,24 +42,6 @@ public class CrawlerModule {
 	@Singleton
 	public IMongoDBClient provideMongoDBClient() {
 		return MongoDBClientImpl.newInstance(configuration);
-		/*
-		return new IMongoDBClient() {
-
-			@Override
-			public void shutdown() {}
-
-			@Override
-			public void writeNews(DBObject dbObject, String source, String path) {}
-
-			@Override
-			public boolean isNewsExists(String source, String path) {
-				return false;
-			}
-
-
-
-		};
-		*/
 	}
 
 	@Provides
@@ -66,12 +50,12 @@ public class CrawlerModule {
 	}
 
 
-	
+
 	@Provides
 	public MetricRegistry provideMetricRegistry() {
 		return metricRegistry;
 	}
-	
+
 	@Singleton
 	@Provides
 	public IImageLoader provideImageLoader() {
@@ -87,6 +71,12 @@ public class CrawlerModule {
 		} catch (SchedulerException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+
+
+	@Provides
+	public IContentProcessor provideContenProcessor(ContentProcessorImpl processor) {
+		return processor;
 	}
 
 

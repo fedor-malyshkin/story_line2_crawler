@@ -30,10 +30,32 @@ import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
  */
 public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
+
+
+	@Override
+	public boolean shouldProcess(String source, WebURL url) {
+		// важная отсечка сайтов из других доменов!!!
+		if (!sourceMap.containsKey(source.toLowerCase()))
+			return false;
+		Class<?> class1 = sourceMap.get(source.toLowerCase());
+		try {
+			Object instance = class1.newInstance();
+			Method method = class1.getMethod(SCRIPT_SHOULD_PROCESS_METHOD_NAME, Object.class);
+			Boolean result = (Boolean) method.invoke(instance, url);
+			return result.booleanValue();
+		} catch (Exception e) {
+			log.error("Exception while processing 'shouldVisit' ({}, {})", source, url.getPath(),
+					e);
+			throw new IllegalStateException(e);
+		}
+	}
+
 	private static final String GROOVY_EXT_NAME = "groovy";
 	private static final String SCRIPT_SOURCE_STATIC_FILED = "source";
 	private static final String SCRIPT_SHOULD_VISIT_METHOD_NAME = "shouldVisit";
 	private static final String SCRIPT_EXTRACT_DATA_METHOD_NAME = "extractData";
+	private static final String SCRIPT_SHOULD_PROCESS_METHOD_NAME = "shouldProcess";
+	
 	private GroovyScriptEngine scriptEngine;
 	private HashMap<String, Class<?>> sourceMap;
 	private Logger log;
@@ -116,7 +138,6 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	 * edu.uci.ics.crawler4j.url.WebURL)
 	 */
 	@Override
-	// TODO: проверить как вызывается - что бы не было кросс-извлечения
 	public boolean shouldVisit(String source, WebURL webURL) throws IllegalStateException {
 		// важная отсечка сайтов из других доменов!!!
 		if (!sourceMap.containsKey(source.toLowerCase()))
