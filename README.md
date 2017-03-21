@@ -32,7 +32,9 @@ crawler_script_dir: /tmp/crawler/scripts
 crawler_storage_dir: /tmp/crawler
 # строка подключения к MongoDB для сохранения результатаов анализа
 mongodb_connection_url: mongodb://localhost:27017/
-
+# Количество дней на которое должна быть более стара новость для того, что бы
+# не загружать картинки
+skip_images_older_days: 30
 
 # Блок с настройками для анализируемых сайтов
 parse_sites:
@@ -97,7 +99,7 @@ import org.joda.time.format.*;
 public class bnkomi_ru {
 	public static String source = "bnkomi.ru"
 
-	def extractData (source, webUrl, html) {
+	def extractData (source, webUrl, htmlContent) {
 		// ...
 		return [ 'title':title, 'publication_date':date, 'content':content, 'image_url':img ]
 	}
@@ -107,11 +109,18 @@ public class bnkomi_ru {
 		// ...
     	return true;
 	}
+
+	def shouldProcess(url)
+	{
+		// ...
+    	return true;
+	}
 }
 ```
 К скриптам предъявляются следующие условия:
 1. имя класса (в данном случае "bnkomi_ru") должно совпадать с именем файла + ".groovy" (в данном случае будет "bnkomi_ru.groovy"). Общая рекомендация: приводить к нижнему регистру и заменять точку на знак подчёркивания.
-1. должны пристутствовать 2 публичных метода:
-  - Map<String, Object> extractData(String domain, WebURL webURL, String html)
-  - boolean shouldVisit(String domain, WebURL webURL)
+1. должны пристутствовать 3 публичных метода:
+  - Map<String, Object> extractData(String source, WebURL webURL, String htmlContent)
+  - boolean shouldVisit( WebURL webURL)
+  - boolean shouldProcess( WebURL webURL)
 1. должен присутствовать публичный статический член (public static) типа "String" с именем "source"
