@@ -165,7 +165,8 @@ public class ContentProcessorImpl implements IContentProcessor {
 			else {
 				Instant tmpInst = DateTimeUtils.now()
 						.minusDays(crawlerConfiguration.skipImagesOlderDays).toInstant();
-				ZonedDateTime imageDT = DateTimeUtils.toUTC(publicationDate, crawlerZoneId);
+				ZonedDateTime imageDT =
+						DateTimeUtils.correctTimeZoneModern(publicationDate, crawlerZoneId);
 				if (imageDT.toInstant().isAfter(tmpInst))
 					imageData = loadImage(webURL, imageUrl);
 			}
@@ -183,13 +184,19 @@ public class ContentProcessorImpl implements IContentProcessor {
 		if (null == imageData)
 			extrEmptyImage.inc();
 
+		// correct time
+		if (null != publicationDate)
+			publicationDate = DateTimeUtils.correctTimeZoneOld(publicationDate, crawlerZoneId);
+		// тут не надо ничего корректировать
+		Date processingDate = new Date();
+
 
 		try {
 			DBObject dbObject = serialize(webURL.getDomain().toLowerCase(), // domain
 					webURL.getPath(), // path
 					webURL.getURL(), // url
 					publicationDate, // "publication_date"
-					new Date(), // processDate
+					processingDate, // processing date
 					title, // title
 					content, // content
 					imageUrl, // image_url
