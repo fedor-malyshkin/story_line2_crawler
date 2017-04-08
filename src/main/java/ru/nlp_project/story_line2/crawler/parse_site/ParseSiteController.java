@@ -33,6 +33,7 @@ import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import edu.uci.ics.crawler4j.url.WebURL;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
@@ -159,7 +160,6 @@ public class ParseSiteController {
 	public void initialize() {
 		checkScriptsDirectory();
 		initializeScheduleJob();
-		initializeCrawler();
 	}
 
 	private void initializeCrawler() {
@@ -199,10 +199,15 @@ public class ParseSiteController {
 	}
 
 	private void startCrawler() {
+		initializeCrawler();
 		if (crawlerConfiguration.async)
 			crawlController.startNonBlocking(factory, crawlerConfiguration.crawlerPerSite);
 		else
 			crawlController.start(factory, crawlerConfiguration.crawlerPerSite);
+		
+		WebURL url = new WebURL();
+		url.setURL(siteConfig.seed);
+		crawlController.getFrontier().schedule(url);
 	}
 
 	public void stop() {
@@ -210,7 +215,9 @@ public class ParseSiteController {
 			scheduler.deleteJob(jobKey);
 		} catch (SchedulerException e) {
 		}
-		crawlController.shutdown();
+
+		if (!crawlController.isFinished())
+			crawlController.shutdown();
 		crawlController.waitUntilFinish();
 	}
 

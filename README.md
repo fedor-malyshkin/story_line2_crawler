@@ -78,49 +78,16 @@ influxdb_metrics:
     "publication_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
 	"processing_date" : ISODate("2017-01-13T16:06:00.000Z"), // datetime in UTC
 	"content" : "Около ... фактическим исполнением.",
+    "raw_content" : "<html>....",  // только в случае невозможности предварительного извлечения данных....
     "path" : "/data/news/58212/",
     "source" : "bnkomi.ru",
     "title" : "Сыктывкарец ради отпуска за границей полностью погасил долг по кредиту",
     "image_url" : "bnkomi.ru/content/news/images/51898/6576-avtovaz-nameren-uvelichit-eksport-lada_mainPhoto.jpg",
-    "image_data" : ........,
     "url" : "https://www.bnkomi.ru/data/news/58212/"
 }
 ```
+При этом в случае если контент сайта не был получен с использованием готовых feed-ов, поля "publication_date", "title", "image_url" и "content" могут отсуствовать и требуется дополнительный анализ и извлечение информации (а поле "raw_content" -- присутствовать).
+
 
 # Интерпретация и структура скриптов для анализа.
 Основной класс для анализа и исполнения скриптов: "ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl", который ожидает найти скрипты в каталоге из переменной "crawler_script_dir".
-
-Каждый скрипт - groovy-скрипт, определённой структуры. Примерная структура каждого скрипта такова:
-```groovy
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.joda.time.format.*;
-
-public class bnkomi_ru {
-	public static String source = "bnkomi.ru"
-
-	def extractData (source, webUrl, htmlContent) {
-		// ...
-		return [ 'title':title, 'publication_date':date, 'content':content, 'image_url':img ]
-	}
-
-	def shouldVisit(url)
-	{
-		// ...
-    	return true;
-	}
-
-	def shouldProcess(url)
-	{
-		// ...
-    	return true;
-	}
-}
-```
-К скриптам предъявляются следующие условия:
-1. имя класса (в данном случае "bnkomi_ru") должно совпадать с именем файла + ".groovy" (в данном случае будет "bnkomi_ru.groovy"). Общая рекомендация: приводить к нижнему регистру и заменять точку на знак подчёркивания.
-1. должны пристутствовать 3 публичных метода:
-  - Map<String, Object> extractData(String source, WebURL webURL, String htmlContent)
-  - boolean shouldVisit( WebURL webURL)
-  - boolean shouldProcess( WebURL webURL)
-1. должен присутствовать публичный статический член (public static) типа "String" с именем "source"

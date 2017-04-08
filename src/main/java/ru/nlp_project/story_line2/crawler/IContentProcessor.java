@@ -35,7 +35,27 @@ public interface IContentProcessor {
 	 * ({@link IMongoDBClient#isNewsExists(String, String)})</li>
 	 * <li>выполнить извлечение данных ({@link #shouldProcess(WebURL)})</li>
 	 * <li>выполнить сериализацию данных
-	 * ({@link IGroovyInterpreter#extractData(String, WebURL, String)})</li>
+	 * ({@link IGroovyInterpreter#extractRawData(String, WebURL, String)})</li>
+	 * <li>выполнить запись данных
+	 * ({@link IMongoDBClient#writeNews(com.mongodb.DBObject, String, String)})</li>
+	 * </ol>
+	 * 
+	 * @param webURL ссылка на страницу
+	 * @param htmlContent HTML содержимое
+	 */
+	void processHtml(WebURL webURL, String htmlContent);
+
+	/**
+	 * Выполнить обработку HTML содержимого страницы или feed'а.
+	 * 
+	 * В большинстве свом алгоритм таков:
+	 * <ol>
+	 * <li>проверить следует ли обрабатывать ({@link #shouldProcess(WebURL)})</li>
+	 * <li>проверить может есть такая запись
+	 * ({@link IMongoDBClient#isNewsExists(String, String)})</li>
+	 * <li>выполнить извлечение данных ({@link #shouldProcess(WebURL)})</li>
+	 * <li>выполнить сериализацию данных
+	 * ({@link IGroovyInterpreter#extractRawData(String, WebURL, String)})</li>
 	 * <li>выполнить запись данных
 	 * ({@link IMongoDBClient#writeNews(com.mongodb.DBObject, String, String)})</li>
 	 * </ol>

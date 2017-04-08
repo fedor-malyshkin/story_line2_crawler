@@ -47,8 +47,30 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	private void initialize() {
 		MongoClientURI mongoClientURI = new MongoClientURI(connectionUrl);
 		this.client = new MongoClient(mongoClientURI);
+		createNewsIndexes();
+		createCrawlerIndexes();
+	}
+
+	private void createCrawlerIndexes() {
 		// create index
 		MongoCollection<DBObject> collections = getNewsCollections();
+
+		// path + source
+		BasicDBObject obj = new BasicDBObject();
+		obj.put("source", 1);
+		obj.put("path", 1);
+		// uniques + bckg
+		IndexOptions ndx = new IndexOptions();
+		ndx.background(true);
+		collections.createIndex(obj, ndx);
+		
+	}
+
+	protected void createNewsIndexes() {
+		// create index
+		MongoCollection<DBObject> collections = getNewsCollections();
+
+		// path + source
 		BasicDBObject obj = new BasicDBObject();
 		obj.put("source", 1);
 		obj.put("path", 1);

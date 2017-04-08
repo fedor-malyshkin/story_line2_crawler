@@ -109,12 +109,12 @@ public class FeedSiteCrawler {
 		String uri = entry.getUri().trim();
 		webURL.setURL(uri);
 		if (!siteConfig.parseForContent) {
-			String htmlContent =
+			String content =
 					getContentFromDescription(siteConfig.source, webURL, entry.getDescription());
 			String imageUrl = null;
 			if (!siteConfig.parseForImage)
 				imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());
-			contentProcessor.processHtml(webURL, htmlContent, title, publicationDate, imageUrl);
+			contentProcessor.processHtml(webURL, content, title, publicationDate, imageUrl);
 		} else {
 			throw new IllegalStateException("NIE!");
 		}

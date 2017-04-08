@@ -1,15 +1,12 @@
 package ru.nlp_project.story_line2.crawler;
 
-import java.time.ZoneId;
 import java.util.ArrayList;
 
 import org.hibernate.validator.constraints.NotEmpty;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.dropwizard.Configuration;
-import ru.nlp_project.story_line2.crawler.utils.DateTimeUtils;
 
 /**
  * Объект-конфигурация (требуется фреймворком dropwizard.io)
@@ -40,13 +37,6 @@ public class CrawlerConfiguration extends Configuration {
 		@JsonProperty(value = "parse_for_image")
 		public boolean parseForImage;
 
-		@JsonProperty(value = "zone_id")
-		public void setZoneId(String text) {
-			zoneId = DateTimeUtils.converToZoneId(text);
-		}
-
-		@JsonIgnore
-		public ZoneId zoneId = ZoneId.systemDefault();
 	}
 
 
@@ -63,13 +53,6 @@ public class CrawlerConfiguration extends Configuration {
 		@JsonProperty(value = "cron_schedule")
 		public String cronSchedule;
 
-		@JsonProperty(value = "zone_id")
-		public void setZoneId(String text) {
-			zoneId = DateTimeUtils.converToZoneId(text);
-		}
-
-		@JsonIgnore
-		public ZoneId zoneId = ZoneId.systemDefault();
 	}
 
 	public static class MetricsConfiguration {

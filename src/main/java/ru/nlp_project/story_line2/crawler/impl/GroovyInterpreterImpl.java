@@ -53,9 +53,10 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	private static final String GROOVY_EXT_NAME = "groovy";
 	private static final String SCRIPT_SOURCE_STATIC_FILED = "source";
 	private static final String SCRIPT_SHOULD_VISIT_METHOD_NAME = "shouldVisit";
+	private static final String SCRIPT_EXTRACT_RAW_DATA_METHOD_NAME = "extractRawData";
 	private static final String SCRIPT_EXTRACT_DATA_METHOD_NAME = "extractData";
 	private static final String SCRIPT_SHOULD_PROCESS_METHOD_NAME = "shouldProcess";
-	
+
 	private GroovyScriptEngine scriptEngine;
 	private HashMap<String, Class<?>> sourceMap;
 	private Logger log;
@@ -158,6 +159,43 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	/*
 	 * (non-Javadoc)
 	 * 
+	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractRawData(java.lang.String,
+	 * edu.uci.ics.crawler4j.url.WebURL, java.lang.String)
+	 */
+	@Override
+	public String extractRawData(String source, WebURL webURL, String html)
+			throws IllegalStateException {
+		if (webURL == null)
+			throw new IllegalArgumentException("webURL is null.");
+		if (!sourceMap.containsKey(source.toLowerCase())) {
+			log.error("No script with 'extractData' for source: '{}'", source);
+			throw new IllegalArgumentException("No script for domain: " + source);
+		}
+
+		Class<?> class1 = sourceMap.get(source.toLowerCase());
+
+		try {
+			Object instance = class1.newInstance();
+			Method method = class1.getMethod(SCRIPT_EXTRACT_RAW_DATA_METHOD_NAME, Object.class,
+					Object.class, Object.class);
+			String result = (String) method.invoke(instance, source, webURL, html);
+			return result;
+		} catch (Exception e) {
+			log.error("Exception while processing {}:{}", source, webURL.getPath(), e);
+			throw new IllegalStateException(e);
+		}
+	}
+
+	@Override
+	public Object executeScript(String script, Binding binding) throws Exception {
+		GroovyShell shell = new GroovyShell(scriptEngine.getGroovyClassLoader(), binding);
+		return shell.evaluate(script);
+	}
+
+	
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractData(java.lang.String,
 	 * java.lang.String)
 	 */
@@ -187,13 +225,6 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 			throw new IllegalStateException(e);
 		}
 	}
-
-	@Override
-	public Object executeScript(String script, Binding binding) throws Exception {
-		GroovyShell shell = new GroovyShell(scriptEngine.getGroovyClassLoader(), binding);
-		return shell.evaluate(script);
-	}
-
 
 
 }

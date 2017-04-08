@@ -57,7 +57,7 @@ public class ParseSiteCrawler extends WebCrawler {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String html = htmlParseData.getHtml();
 
-			contentProcessor.processHtml(webURL, html, null, null, null);
+			contentProcessor.processHtml(webURL, html);
 		}
 	}
 

@@ -43,6 +43,21 @@ public interface IGroovyInterpreter {
 			throws IllegalStateException;
 
 	/**
+	 * Выполнить извлечение данных.
+	 * 
+	 * При анализе извлечь данные со страницы (либо её копия -- либо данные полученные более хитрым
+	 * путём).
+	 * 
+	 * @param source источник данных
+	 * @param html html контент страницы
+	 * @param webURL ссылка на страницу
+	 * @return ассоциативный массив или null в случае неверной (не поддерживаемой) страницу
+	 * @throws IllegalStateException
+	 */
+	String extractRawData(String source, WebURL webURL, String html) throws IllegalStateException;
+
+
+	/**
 	 * Выполнить произвольный скрипт.
 	 * 
 	 * @param script содержание скрипта
@@ -52,7 +67,7 @@ public interface IGroovyInterpreter {
 	 */
 	Object executeScript(String script, Binding binding) throws Exception;
 
-	
+
 	/**
 	 * Проверить необходимость обработки страницы.
 	 * 

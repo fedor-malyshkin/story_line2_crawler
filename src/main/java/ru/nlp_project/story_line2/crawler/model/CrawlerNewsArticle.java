@@ -13,7 +13,7 @@ public class CrawlerNewsArticle {
 	}
 
 	public CrawlerNewsArticle(String source, String path, String url, Date publicationDate,
-			Date processingDate, String title, String content, String imageUrl, byte[] imageData) {
+			Date processingDate, String title, String content, String imageUrl, String rawContent) {
 		super();
 		this.publicationDate = publicationDate;
 		this.processingDate = processingDate;
@@ -23,7 +23,7 @@ public class CrawlerNewsArticle {
 		this.title = title;
 		this.url = url;
 		this.imageUrl = imageUrl;
-		this.imageData = imageData;
+		this.rawContent = rawContent;
 	}
 
 	@JsonProperty("_id")
@@ -70,6 +70,6 @@ public class CrawlerNewsArticle {
 	@JsonProperty("image_url")
 	String imageUrl;
 
-	@JsonProperty("image_data")
-	byte[] imageData;
+	@JsonProperty("raw_content")
+	String rawContent;
 }

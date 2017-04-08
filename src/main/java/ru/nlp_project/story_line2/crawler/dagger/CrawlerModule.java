@@ -14,11 +14,9 @@ import dagger.Provides;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
-import ru.nlp_project.story_line2.crawler.IImageLoader;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
 import ru.nlp_project.story_line2.crawler.impl.ContentProcessorImpl;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
-import ru.nlp_project.story_line2.crawler.impl.ImageLoaderImpl;
 import ru.nlp_project.story_line2.crawler.impl.MongoDBClientImpl;
 
 @Module
@@ -56,11 +54,6 @@ public class CrawlerModule {
 		return metricRegistry;
 	}
 
-	@Singleton
-	@Provides
-	public IImageLoader provideImageLoader() {
-		return new ImageLoaderImpl();
-	}
 
 	@Singleton
 	@Provides
