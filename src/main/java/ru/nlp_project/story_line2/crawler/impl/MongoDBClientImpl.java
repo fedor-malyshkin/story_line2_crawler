@@ -31,10 +31,10 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	private String connectionUrl;
 	private MongoClient client;
 	private MongoCollection<DBObject> collection;
-	private Logger logger;
+	private Logger log;
 
 	public MongoDBClientImpl(String connectionUrl) {
-		logger = LoggerFactory.getLogger(this.getClass());
+		log = LoggerFactory.getLogger(this.getClass());
 		this.connectionUrl = connectionUrl;
 	}
 
@@ -48,22 +48,6 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		MongoClientURI mongoClientURI = new MongoClientURI(connectionUrl);
 		this.client = new MongoClient(mongoClientURI);
 		createNewsIndexes();
-		createCrawlerIndexes();
-	}
-
-	private void createCrawlerIndexes() {
-		// create index
-		MongoCollection<DBObject> collections = getNewsCollections();
-
-		// path + source
-		BasicDBObject obj = new BasicDBObject();
-		obj.put("source", 1);
-		obj.put("path", 1);
-		// uniques + bckg
-		IndexOptions ndx = new IndexOptions();
-		ndx.background(true);
-		collections.createIndex(obj, ndx);
-		
 	}
 
 	protected void createNewsIndexes() {
@@ -78,7 +62,11 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		IndexOptions ndx = new IndexOptions();
 		ndx.background(true);
 		ndx.unique(true);
-		collections.createIndex(obj, ndx);
+		try {
+			collections.createIndex(obj, ndx);
+		} catch (Exception e) {
+			log.error("Error while creating index 'source-path': " + e.getMessage(), e);
+		}
 	}
 
 	/*
@@ -103,7 +91,7 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		FindIterable<DBObject> find =
 				collection.find(and(eq("source", domain), eq("path", path))).limit(1);
 		if (find.first() != null) {
-			logger.debug("Record already exists {}:{}", domain, path);
+			log.debug("Record already exists {}:{}", domain, path);
 			// don nothing
 			return;
 		}
@@ -111,9 +99,9 @@ public class MongoDBClientImpl implements IMongoDBClient {
 		// Document document = Document.parse(json);
 		try {
 			collection.insertOne(dbObject);
-			logger.info("Write record {}:{}.", domain, path);
+			log.info("Write record {}:{}.", domain, path);
 		} catch (Exception e) {
-			logger.error("Exception while write record {}:{}", domain, path, e);
+			log.error("Exception while write record {}:{}", domain, path, e);
 		}
 	}
 

@@ -5,6 +5,7 @@ import javax.inject.Inject;
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
+import edu.uci.ics.crawler4j.url.URLCanonicalizer;
 import edu.uci.ics.crawler4j.url.WebURL;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
@@ -21,9 +22,16 @@ public class ParseSiteCrawler extends WebCrawler {
 	@Inject
 	protected IContentProcessor contentProcessor;
 	private ParseSiteConfiguration siteConfig;
+	private WebURL seedWebURL;
+	private WebURL seedWebURLCannoninicalized;
 
 	ParseSiteCrawler(ParseSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
+		this.seedWebURL = new WebURL();
+		this.seedWebURL.setURL(siteConfig.seed);
+
+		this.seedWebURLCannoninicalized = new WebURL();
+		this.seedWebURLCannoninicalized.setURL(URLCanonicalizer.getCanonicalURL(siteConfig.seed));
 	}
 
 	void initialize() {
@@ -60,5 +68,12 @@ public class ParseSiteCrawler extends WebCrawler {
 			contentProcessor.processHtml(webURL, html);
 		}
 	}
+
+	@Override
+	protected boolean isSeedUrl(WebURL curURL) {
+		return seedWebURL.equals(curURL) || seedWebURLCannoninicalized.equals(curURL);
+	}
+
+
 
 }

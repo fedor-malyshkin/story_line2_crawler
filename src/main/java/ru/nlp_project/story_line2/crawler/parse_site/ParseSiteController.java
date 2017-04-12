@@ -33,7 +33,6 @@ import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
 import edu.uci.ics.crawler4j.fetcher.PageFetcher;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
 import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
-import edu.uci.ics.crawler4j.url.WebURL;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
@@ -129,6 +128,7 @@ public class ParseSiteController {
 		CrawlConfig config = new CrawlConfig();
 		config.setCrawlStorageFolder(crawlStorageFolder);
 		config.setResumableCrawling(true);
+		config.setShutdownOnEmptyQueue(false);
 		config.setPolitenessDelay(100);
 		return config;
 	}
@@ -155,11 +155,14 @@ public class ParseSiteController {
 		// rerun crawler if is finished (may be there is new pages)
 		if (crawlController.isFinished())
 			startCrawler();
+		// re add seed oages
+		crawlController.addSeed(siteConfig.seed);
 	}
 
 	public void initialize() {
 		checkScriptsDirectory();
 		initializeScheduleJob();
+		initializeCrawler();
 	}
 
 	private void initializeCrawler() {
@@ -194,20 +197,14 @@ public class ParseSiteController {
 			logger.error("There is error while scheduling; {}", siteConfig.source, e);
 			throw new IllegalStateException(e);
 		}
-
 		startCrawler();
 	}
 
 	private void startCrawler() {
-		initializeCrawler();
 		if (crawlerConfiguration.async)
 			crawlController.startNonBlocking(factory, crawlerConfiguration.crawlerPerSite);
 		else
 			crawlController.start(factory, crawlerConfiguration.crawlerPerSite);
-		
-		WebURL url = new WebURL();
-		url.setURL(siteConfig.seed);
-		crawlController.getFrontier().schedule(url);
 	}
 
 	public void stop() {
