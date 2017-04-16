@@ -202,10 +202,10 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	@Override
 	@SuppressWarnings("unchecked")
 	// TODO: проверить как вызывается - что бы не было кросс-извлечения
-	public Map<String, Object> extractData(String source, WebURL webURL, String html)
+	public Map<String, Object> extractData(String source, String url, String html)
 			throws IllegalStateException {
-		if (webURL == null)
-			throw new IllegalArgumentException("webURL is null.");
+		if (url == null)
+			throw new IllegalArgumentException("url is null.");
 		if (!sourceMap.containsKey(source.toLowerCase())) {
 			log.error("No script with 'extractData' for source: '{}'", source);
 			throw new IllegalArgumentException("No script for domain: " + source);
@@ -218,10 +218,10 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 			Method method = class1.getMethod(SCRIPT_EXTRACT_DATA_METHOD_NAME, Object.class,
 					Object.class, Object.class);
 			Map<String, Object> result =
-					(Map<String, Object>) method.invoke(instance, source, webURL, html);
+					(Map<String, Object>) method.invoke(instance, source, url, html);
 			return result;
 		} catch (Exception e) {
-			log.error("Exception while processing {}:{}", source, webURL.getPath(), e);
+			log.error("Exception while processing {}:{}", source, url, e);
 			throw new IllegalStateException(e);
 		}
 	}

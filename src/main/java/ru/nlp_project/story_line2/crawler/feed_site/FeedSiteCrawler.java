@@ -60,7 +60,7 @@ public class FeedSiteCrawler {
 		if ("text/html".equalsIgnoreCase(description.getType())) {
 			// в данном случае просто убираем тэги из HTML
 			Map<String, Object> extractData =
-					groovyInterpreter.extractData(source, webURL, description.getValue());
+					groovyInterpreter.extractData(source, webURL.getURL(), description.getValue());
 			String title = (String) extractData.get(EXTR_KEY_CONTENT);
 			return title;
 		} else {

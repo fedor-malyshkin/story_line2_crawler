@@ -39,7 +39,7 @@ public interface IGroovyInterpreter {
 	 * @return ассоциативный массив или null в случае неверной (не поддерживаемой) страницу
 	 * @throws IllegalStateException
 	 */
-	Map<String, Object> extractData(String source, WebURL webURL, String html)
+	Map<String, Object> extractData(String source, String url, String html)
 			throws IllegalStateException;
 
 	/**

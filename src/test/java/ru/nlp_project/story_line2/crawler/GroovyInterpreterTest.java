@@ -63,9 +63,7 @@ public class GroovyInterpreterTest {
 		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
-		WebURL webURL = new WebURL();
-		webURL.setURL("http://working_script");
-		testable.extractData("working_script", webURL, "");
+		testable.extractData("working_script", "http://working_script", "");
 	}
 
 	@Test
@@ -85,16 +83,14 @@ public class GroovyInterpreterTest {
 		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
-		WebURL webURL = new WebURL();
-		webURL.setURL("http://working_script");
-		Map<String, Object> extractData = testable.extractData("working_script", webURL, "");
-		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title"));		
-		
+		Map<String, Object> extractData = testable.extractData("working_script", "http://working_script", "");
+		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title"));
+
 		File fileSource = new File(srcDir, "new_working_script.groovy");
 		File dstSource = new File(scriptDir.toFile(), "working_script.groovy");
-		
+
 		FileUtils.copyFile(fileSource, dstSource);
-		extractData = testable.extractData("working_script", webURL, "");
+		extractData = testable.extractData("working_script", "http://working_script", "");
 		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title2"));
 	}
 }
