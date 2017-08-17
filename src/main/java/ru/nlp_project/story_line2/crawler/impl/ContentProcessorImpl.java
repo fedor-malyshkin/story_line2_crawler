@@ -129,7 +129,7 @@ public class ContentProcessorImpl implements IContentProcessor {
 			extrEmptyPubDate.inc();
 		if (null == title || title.isEmpty())
 			extrEmptyTitle.inc();
-		if (null == content || content.isEmpty())
+		if (useRawContent && (null == content || content.isEmpty()))
 			extrEmptyContent.inc();
 		if (null == imageUrl || imageUrl.isEmpty())
 			extrEmptyImageUrl.inc();
@@ -145,7 +145,7 @@ public class ContentProcessorImpl implements IContentProcessor {
 					publicationDate, // "publication_date"
 					processingDate, // processing date
 					title, // title
-					content, // content
+					useRawContent ? null : content, // content
 					imageUrl, // image_url
 					rawContent // raw content
 
