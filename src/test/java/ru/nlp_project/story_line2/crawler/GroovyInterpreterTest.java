@@ -1,11 +1,13 @@
 package ru.nlp_project.story_line2.crawler;
 
+import static org.hamcrest.core.IsEqual.equalTo;
+
+import edu.uci.ics.crawler4j.url.WebURL;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -13,10 +15,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import static org.hamcrest.core.IsEqual.*;
-
-import edu.uci.ics.crawler4j.url.WebURL;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 
 public class GroovyInterpreterTest {
