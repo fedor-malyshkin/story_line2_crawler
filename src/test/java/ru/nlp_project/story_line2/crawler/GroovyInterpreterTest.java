@@ -1,6 +1,6 @@
 package ru.nlp_project.story_line2.crawler;
 
-import static org.hamcrest.core.IsEqual.equalTo;
+import static org.assertj.core.api.Assertions.*;
 
 import edu.uci.ics.crawler4j.url.WebURL;
 import java.io.File;
@@ -22,7 +22,7 @@ public class GroovyInterpreterTest {
 	private static File srcDir =
 			new File("src/test/groovy/ru/nlp_project/story_line2/crawler/parser");
 	private static Path scriptDir;
-	private IGroovyInterpreter testable;
+	private GroovyInterpreterImpl testable;
 	private CrawlerConfiguration configuration;
 
 	@Before
@@ -44,11 +44,14 @@ public class GroovyInterpreterTest {
 	}
 
 	@Test(expected = IllegalStateException.class)
-	public void testInitializeWithNonEmptyScriptDir() {
+	public void testInitializeWithEmptyScriptDir() {
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 
-	@Test(expected = IllegalStateException.class)
+	/**
+	 * Тестируем на стабильное поведение при отсуствии поля "source"  в классе.
+	 */
+	@Test
 	public void testGetSourceFromScriptClass_NoSource() throws IOException {
 		IOFileFilter filter = FileFilterUtils.prefixFileFilter("non_existing_source");
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
@@ -61,7 +64,9 @@ public class GroovyInterpreterTest {
 		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
-		testable.extractData("working_script", "http://working_script", "");
+		Map<String, Object> result = testable
+				.extractData("working_script", "http://working_script", "");
+		assertThat(result).isNotNull().isNotEmpty().hasSize(4);
 	}
 
 	@Test
@@ -71,7 +76,50 @@ public class GroovyInterpreterTest {
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
 		webURL.setURL("http://working_script");
-		testable.shouldVisit("working_script", webURL);
+		boolean expected = testable.shouldVisit("working_script", webURL);
+		assertThat(expected).isTrue();
+	}
+
+
+	@Test(expected = IllegalArgumentException.class)
+	public void testCallExtractData_NonExistingSource() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		Map<String, Object> result = testable
+				.extractData("NON_EXISTING_SOURCE", "http://working_script", "");
+	}
+
+
+	@Test
+	public void testCallShouldVisit_NonExistingSource() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		boolean expected = testable.shouldVisit("NON_EXISTING_SOURCE", webURL);
+		assertThat(expected).isFalse();
+	}
+
+
+	/**
+	 * Проверка корректного вызова при наличии указания имени пакета в скрипте и вызова другого класса
+	 * (в котором так же указан пакет)  -- интересует влияет ли неверное местоположение на разрешение
+	 * имён.
+	 */
+	@Test
+	public void testCallExtractData_WithSpecifiedPackageAndCalledUtil() throws IOException {
+		IOFileFilter filter = FileFilterUtils.prefixFileFilter("package_");
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		Map<String, Object> result = testable
+				.extractData("package_script", "http://working_script", "");
+		assertThat(result).isNotNull().isNotEmpty().hasSize(4);
 	}
 
 
@@ -81,14 +129,15 @@ public class GroovyInterpreterTest {
 		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
-		Map<String, Object> extractData = testable.extractData("working_script", "http://working_script", "");
-		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title"));
+		Map<String, Object> extractData = testable
+				.extractData("working_script", "http://working_script", "");
+		assertThat(extractData.get("title")).isEqualTo("title");
 
 		File fileSource = new File(srcDir, "new_working_script.groovy");
 		File dstSource = new File(scriptDir.toFile(), "working_script.groovy");
 
 		FileUtils.copyFile(fileSource, dstSource);
 		extractData = testable.extractData("working_script", "http://working_script", "");
-		org.junit.Assert.assertThat(extractData.get("title"), equalTo("title2"));
+		assertThat(extractData.get("title")).isEqualTo("title2");
 	}
 }
