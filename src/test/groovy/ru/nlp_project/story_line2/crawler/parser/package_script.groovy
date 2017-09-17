@@ -4,7 +4,7 @@ public class PackageScript {
 	public static String source = "package_script"
 
 	def extractData(source, webUrl, html) {
-	return PackageUtilScript.returnValue()
+		return PackageUtilScript.returnValue()
 	}
 
 	def shouldVisit(url) {
