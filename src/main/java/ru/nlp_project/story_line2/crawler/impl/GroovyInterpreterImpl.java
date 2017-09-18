@@ -76,7 +76,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 		try {
 			scriptEngine = createGroovyScriptEngine(configuration);
 			Collection<File> files = FileUtils.listFiles(new File(configuration.scriptDir),
-					new String[]{GROOVY_EXT_NAME}, false);
+					new String[]{GROOVY_EXT_NAME}, true);
 
 			if (files.isEmpty()) {
 				throw new IllegalStateException(
@@ -136,7 +136,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	}
 
 	private Class<?> loadScriptClassByName(File file) throws ResourceException, ScriptException {
-		String name = file.getName();
+		String name = file.getAbsolutePath();
 		return (Class<?>) scriptEngine.loadScriptByName(name);
 	}
 

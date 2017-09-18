@@ -134,7 +134,7 @@ public class Crawler implements Managed {
 		final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
 				.outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.crawler"))
 				.convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
-		reporter.start(1, TimeUnit.MINUTES);
+		reporter.start(5, TimeUnit.MINUTES);
 
 		if (metricsConfiguration.enabled) {
 			String hostName = InetAddress.getLocalHost().getCanonicalHostName();

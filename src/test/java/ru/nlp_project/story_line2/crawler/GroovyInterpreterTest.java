@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
 import org.junit.After;
@@ -20,7 +21,7 @@ import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 public class GroovyInterpreterTest {
 
 	private static File srcDir =
-			new File("src/test/groovy/ru/nlp_project/story_line2/crawler/parser");
+			new File("src/test/groovy");
 	private static Path scriptDir;
 	private GroovyInterpreterImpl testable;
 	private CrawlerConfiguration configuration;
@@ -53,7 +54,8 @@ public class GroovyInterpreterTest {
 	 */
 	@Test
 	public void testGetSourceFromScriptClass_NoSource() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("non_existing_source");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("non_existing_source"), DirectoryFileFilter.DIRECTORY);
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
@@ -61,7 +63,9 @@ public class GroovyInterpreterTest {
 
 	@Test
 	public void testCallExtractData() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("working_script"), DirectoryFileFilter.DIRECTORY);
+
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		Map<String, Object> result = testable
@@ -71,7 +75,8 @@ public class GroovyInterpreterTest {
 
 	@Test
 	public void testCallShouldVisit() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("working_script"), DirectoryFileFilter.DIRECTORY);
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
@@ -83,7 +88,8 @@ public class GroovyInterpreterTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testCallExtractData_NonExistingSource() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("working_script"), DirectoryFileFilter.DIRECTORY);
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
@@ -95,7 +101,9 @@ public class GroovyInterpreterTest {
 
 	@Test
 	public void testCallShouldVisit_NonExistingSource() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("working_script");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("working_script"), DirectoryFileFilter.DIRECTORY);
+
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
@@ -112,7 +120,8 @@ public class GroovyInterpreterTest {
 	 */
 	@Test
 	public void testCallExtractData_WithSpecifiedPackageAndCalledUtil() throws IOException {
-		IOFileFilter filter = FileFilterUtils.prefixFileFilter("package_");
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("package_"), DirectoryFileFilter.DIRECTORY);
 		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 		WebURL webURL = new WebURL();
@@ -122,6 +131,22 @@ public class GroovyInterpreterTest {
 		assertThat(result).isNotNull().isNotEmpty().hasSize(4);
 	}
 
+
+	/**
+	 * Проверка корректной загрузки скриптов при наличии рекурсивных ссылок.
+	 */
+	@Test
+	public void testCallExtractData_RecursiveReferences() throws IOException {
+		IOFileFilter filter = FileFilterUtils
+				.or(FileFilterUtils.prefixFileFilter("recursive_"), DirectoryFileFilter.DIRECTORY);
+		FileUtils.copyDirectory(srcDir, scriptDir.toFile(), filter, false);
+		testable = GroovyInterpreterImpl.newInstance(configuration);
+		WebURL webURL = new WebURL();
+		webURL.setURL("http://working_script");
+		Map<String, Object> result = testable
+				.extractData("recursive_script1", "http://working_script", "");
+		assertThat(result).isNotNull().isInstanceOf(Map.class);
+	}
 
 	@Test
 	@Ignore
