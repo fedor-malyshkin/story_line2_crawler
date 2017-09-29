@@ -229,7 +229,6 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	// TODO: проверить как вызывается - что бы не было кросс-извлечения
 	public Map<String, Object> extractData(String source, String url, String html)
 			throws IllegalStateException {
 		if (url == null) {

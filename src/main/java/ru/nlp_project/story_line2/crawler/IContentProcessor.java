@@ -32,12 +32,12 @@ public interface IContentProcessor {
 	 * <ol>
 	 * <li>проверить следует ли обрабатывать ({@link #shouldProcess(WebURL)})</li>
 	 * <li>проверить может есть такая запись
-	 * ({@link IMongoDBClient#isNewsExists(String, String)})</li>
+	 * ({@link IMongoDBClient#isCrawlerEntryExists(String, String)})</li>
 	 * <li>выполнить извлечение данных ({@link #shouldProcess(WebURL)})</li>
 	 * <li>выполнить сериализацию данных
 	 * ({@link IGroovyInterpreter#extractRawData(String, WebURL, String)})</li>
 	 * <li>выполнить запись данных
-	 * ({@link IMongoDBClient#writeNews(com.mongodb.DBObject, String, String)})</li>
+	 * ({@link IMongoDBClient#writeCrawlerEntry(com.mongodb.DBObject, String, String)})</li>
 	 * </ol>
 	 * 
 	 * @param webURL ссылка на страницу
@@ -52,12 +52,12 @@ public interface IContentProcessor {
 	 * <ol>
 	 * <li>проверить следует ли обрабатывать ({@link #shouldProcess(WebURL)})</li>
 	 * <li>проверить может есть такая запись
-	 * ({@link IMongoDBClient#isNewsExists(String, String)})</li>
+	 * ({@link IMongoDBClient#isCrawlerEntryExists(String, String)})</li>
 	 * <li>выполнить извлечение данных ({@link #shouldProcess(WebURL)})</li>
 	 * <li>выполнить сериализацию данных
 	 * ({@link IGroovyInterpreter#extractRawData(String, WebURL, String)})</li>
 	 * <li>выполнить запись данных
-	 * ({@link IMongoDBClient#writeNews(com.mongodb.DBObject, String, String)})</li>
+	 * ({@link IMongoDBClient#writeCrawlerEntry(com.mongodb.DBObject, String, String)})</li>
 	 * </ol>
 	 * 
 	 * @param webURL ссылка на страницу

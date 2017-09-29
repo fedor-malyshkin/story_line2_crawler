@@ -35,7 +35,7 @@ public interface IGroovyInterpreter {
 	 * 
 	 * @param source источник данных
 	 * @param html html контент страницы
-	 * @param webURL ссылка на страницу
+	 * @param url ссылка на страницу
 	 * @return ассоциативный массив или null в случае неверной (не поддерживаемой) страницу
 	 * @throws IllegalStateException
 	 */

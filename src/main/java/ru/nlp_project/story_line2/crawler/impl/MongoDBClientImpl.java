@@ -82,11 +82,11 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#writeNews(java.lang.String,
+	 * @see ru.nlp_project.story_line2.crawler.IMongoDBClient#writeCrawlerEntry(java.lang.String,
 	 * java.lang.String, java.lang.String)
 	 */
 	@Override
-	public void writeNews(DBObject dbObject, String domain, String path) {
+	public void writeCrawlerEntry(DBObject dbObject, String domain, String path) {
 		collection = getNewsCollections();
 		FindIterable<DBObject> find =
 				collection.find(and(eq("source", domain), eq("path", path))).limit(1);
@@ -114,7 +114,7 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	}
 
 	@Override
-	public boolean isNewsExists(String source, String path) {
+	public boolean isCrawlerEntryExists(String source, String path) {
 		collection = getNewsCollections();
 		FindIterable<DBObject> find =
 				collection.find(and(eq("source", source), eq("path", path))).limit(1);

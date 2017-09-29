@@ -27,7 +27,7 @@ public class BSONUtilsTest {
 	@Test
 	public void testSerializeDateTimeInUTC() {
 		CrawlerNewsArticle article = new CrawlerNewsArticle(null, null, null, getFixedDate(), null,
-				null, null, null, null);
+				null, null, null);
 		BasicDBObject res = BSONUtils.serialize(article);
 		// Sat Apr 22 20:21:00 MSK 2017
 		assertThat(res.toString(), startsWith("{ \"publication_date\" : { \"$date\" : \"2017-04-22T19:21:00"));

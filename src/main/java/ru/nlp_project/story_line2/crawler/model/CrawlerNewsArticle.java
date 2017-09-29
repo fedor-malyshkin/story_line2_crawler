@@ -1,30 +1,11 @@
 package ru.nlp_project.story_line2.crawler.model;
 
-import java.util.Date;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Date;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CrawlerNewsArticle {
-
-	public CrawlerNewsArticle() {
-		super();
-	}
-
-	public CrawlerNewsArticle(String source, String path, String url, Date publicationDate,
-			Date processingDate, String title, String content, String imageUrl, String rawContent) {
-		super();
-		this.publicationDate = publicationDate;
-		this.processingDate = processingDate;
-		this.content = content;
-		this.path = path;
-		this.source = source;
-		this.title = title;
-		this.url = url;
-		this.imageUrl = imageUrl;
-		this.rawContent = rawContent;
-	}
 
 	@JsonProperty("_id")
 	Id _id;
@@ -38,11 +19,6 @@ public class CrawlerNewsArticle {
 	 */
 	@JsonProperty("publication_date")
 	Date publicationDate;
-	/**
-	 * текст новости/статьи
-	 */
-	@JsonProperty("content")
-	String content;
 	/**
 	 * путь внутри сайта
 	 */
@@ -63,13 +39,28 @@ public class CrawlerNewsArticle {
 	 */
 	@JsonProperty("url")
 	String url;
-
 	/**
 	 * ссылка на страницу
 	 */
 	@JsonProperty("image_url")
 	String imageUrl;
-
 	@JsonProperty("raw_content")
 	String rawContent;
+
+	public CrawlerNewsArticle() {
+		super();
+	}
+
+	public CrawlerNewsArticle(String source, String path, String url, Date publicationDate,
+			Date processingDate, String title, String imageUrl, String rawContent) {
+		super();
+		this.publicationDate = publicationDate;
+		this.processingDate = processingDate;
+		this.path = path;
+		this.source = source;
+		this.title = title;
+		this.url = url;
+		this.imageUrl = imageUrl;
+		this.rawContent = rawContent;
+	}
 }

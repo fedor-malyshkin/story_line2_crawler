@@ -16,7 +16,7 @@ public interface IMongoDBClient {
 	 * @param source
 	 * @param path
 	 */
-	void writeNews(DBObject dbObject, String source, String path);
+	void writeCrawlerEntry(DBObject dbObject, String source, String path);
 
-	boolean isNewsExists(String source, String path);
+	boolean isCrawlerEntryExists(String source, String path);
 }
