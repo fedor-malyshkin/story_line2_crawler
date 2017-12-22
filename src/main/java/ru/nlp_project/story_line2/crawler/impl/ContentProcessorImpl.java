@@ -1,78 +1,42 @@
 package ru.nlp_project.story_line2.crawler.impl;
 
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.mongodb.DBObject;
 import edu.uci.ics.crawler4j.url.WebURL;
 import java.io.IOException;
 import java.util.Date;
-import javax.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.nlp_project.story_line2.crawler.Crawler;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
+import ru.nlp_project.story_line2.crawler.IMetricsManager;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
 import ru.nlp_project.story_line2.crawler.model.CrawlerNewsArticle;
 import ru.nlp_project.story_line2.crawler.utils.BSONUtils;
 
 public class ContentProcessorImpl implements IContentProcessor {
 
-	@Inject
-	protected MetricRegistry metricRegistry;
-	@Inject
+	@Autowired
+	protected IMetricsManager metricsManager;
+	@Autowired
 	protected CrawlerConfiguration crawlerConfiguration;
-	@Inject
+	@Autowired
 	protected IGroovyInterpreter groovyInterpreter;
-	@Inject
+	@Autowired
 	protected IMongoDBClient dbClientManager;
 
-	private String source;
-	private Counter linkProcessed;
-	private Counter pagesProcessed;
-	private Counter pagesEmpty;
-	private Counter pagesFull;
-
-	private Counter extrEmptyTitle;
-	private Counter extrEmptyContent;
-	private Counter extrEmptyPubDate;
-	private Counter extrEmptyImageUrl;
+	private String sourceName;
 	private Logger log;
-
-
-	@Inject
-	public ContentProcessorImpl() {
-	}
 
 
 	@Override
 	public void initialize(String source) {
-		this.source = source;
-		String loggerClass = String.format("%s[%s]", this.getClass().getCanonicalName(), source);
+		this.sourceName = source;
+		String loggerClass = String.format("%s[%s]", this.getClass().getCanonicalName(), sourceName);
 		log = LoggerFactory.getLogger(loggerClass);
-
 		// initialize metrics
-		String escapedSource = source.replace(".", "_");
-
-		linkProcessed = metricRegistry
-				.counter("processed_link" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		pagesProcessed = metricRegistry
-				.counter("processed_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		pagesEmpty = metricRegistry
-				.counter("processed_empty_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		pagesFull = metricRegistry
-				.counter("processed_full_pages" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-
-		// extraction quality
-		extrEmptyTitle = metricRegistry
-				.counter("extracted_empty_title" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		extrEmptyContent = metricRegistry
-				.counter("extracted_empty_content" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		extrEmptyPubDate = metricRegistry
-				.counter("extracted_empty_pub_date" + "." + escapedSource + Crawler.METRICS_SUFFIX);
-		extrEmptyImageUrl = metricRegistry.counter(
-				"extracted_empty_image_url" + "." + escapedSource + Crawler.METRICS_SUFFIX);
+		String escapedSource = sourceName.replace(".", "_");
 	}
 
 
@@ -92,33 +56,33 @@ public class ContentProcessorImpl implements IContentProcessor {
 		}
 
 		// skip if exists
-		if (dbClientManager.isCrawlerEntryExists(source, webURL.getPath())) {
-			log.debug("Record already exists - skip {}:{} ({})", source, webURL.getPath(),
+		if (dbClientManager.isCrawlerEntryExists(sourceName, webURL.getPath())) {
+			log.debug("Record already exists - skip {}:{} ({})", sourceName, webURL.getPath(),
 					webURL.getURL());
 			return;
 		}
 
-		pagesProcessed.inc();
-		String rawContent = groovyInterpreter.extractRawData(source, webURL, content);
+		metricsManager.incrementPagesProcessed(sourceName);
+		String rawContent = groovyInterpreter.extractRawData(sourceName, webURL, content);
 		if (null == rawContent) {
-			pagesEmpty.inc();
-			log.debug("No content {}:{} ({})", source, webURL.getPath(), webURL.getURL());
+			metricsManager.incrementPagesEmpty(sourceName);
+			log.debug("No content {}:{} ({})", sourceName, webURL.getPath(), webURL.getURL());
 			return;
 		}
 
-		pagesFull.inc();
+		metricsManager.incrementPagesFull(sourceName);
 		// metrics
 		if (null == publicationDate) {
-			extrEmptyPubDate.inc();
+			metricsManager.incrementExtractionEmptyPubDate(sourceName);
 		}
 		if (null == title || title.isEmpty()) {
-			extrEmptyTitle.inc();
+			metricsManager.incrementExtractionEmptyTitle(sourceName);
 		}
 		if (null == content || content.isEmpty()) {
-			extrEmptyContent.inc();
+			metricsManager.incrementExtractionEmptyContent(sourceName);
 		}
 		if (null == imageUrl || imageUrl.isEmpty()) {
-			extrEmptyImageUrl.inc();
+			metricsManager.incrementExtractionEmptyImageUrl(sourceName);
 		}
 
 		// тут не надо ничего корректировать
@@ -135,7 +99,7 @@ public class ContentProcessorImpl implements IContentProcessor {
 					rawContent // raw content
 
 			);
-			dbClientManager.writeCrawlerEntry(dbObject, source, webURL.getPath());
+			dbClientManager.writeCrawlerEntry(dbObject, sourceName, webURL.getPath());
 		} catch (Exception e) {
 			log.error(e.getMessage(), e);
 		}
@@ -152,17 +116,18 @@ public class ContentProcessorImpl implements IContentProcessor {
 
 	@Override
 	public boolean shouldVisit(WebURL url) {
-		linkProcessed.inc();
+		metricsManager.incrementLinkProcessed(sourceName);
 		// необходимо учитывать, что тут может возникнуть ситуация, когда в анализируемом сайте
 		// имеем ссылку на другой сайт в анализе и в таком случае надо ответить "нет" - нужные
 		// данные лишь для основного сайта, другие данные получим в другом парсере
-		return source.equalsIgnoreCase(url.getDomain()) && groovyInterpreter.shouldVisit(source, url);
+		return sourceName.equalsIgnoreCase(url.getDomain()) && groovyInterpreter
+				.shouldVisit(sourceName, url);
 
 	}
 
 	@Override
 	public boolean shouldProcess(WebURL url) {
-		return groovyInterpreter.shouldProcess(source, url);
+		return groovyInterpreter.shouldProcess(sourceName, url);
 	}
 
 }

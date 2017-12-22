@@ -1,26 +1,23 @@
 package ru.nlp_project.story_line2.crawler.parse_site;
 
-import javax.inject.Inject;
-
 import edu.uci.ics.crawler4j.crawler.Page;
 import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.URLCanonicalizer;
 import edu.uci.ics.crawler4j.url.WebURL;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
-import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
 
 /**
  * Краулер для новостей.
- * 
- * @author fedor
  *
+ * @author fedor
  */
 public class ParseSiteCrawler extends WebCrawler {
 
-	@Inject
-	protected IContentProcessor contentProcessor;
+	@Autowired
+	private IContentProcessor contentProcessor;
 	private ParseSiteConfiguration siteConfig;
 	private WebURL seedWebURL;
 	private WebURL seedWebURLCannoninicalized;
@@ -35,7 +32,6 @@ public class ParseSiteCrawler extends WebCrawler {
 	}
 
 	void initialize() {
-		CrawlerBuilder.getComponent().inject(this);
 		contentProcessor.initialize(siteConfig.source);
 	}
 
@@ -73,7 +69,6 @@ public class ParseSiteCrawler extends WebCrawler {
 	protected boolean isSeedUrl(WebURL curURL) {
 		return seedWebURL.equals(curURL) || seedWebURLCannoninicalized.equals(curURL);
 	}
-
 
 
 }

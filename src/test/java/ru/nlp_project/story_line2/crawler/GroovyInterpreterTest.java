@@ -30,7 +30,7 @@ public class GroovyInterpreterTest {
 	public void setUp() throws Exception {
 		scriptDir = Files.createTempDirectory("crawler");
 		configuration = new CrawlerConfiguration();
-		configuration.scriptDir = scriptDir.toString();
+		configuration.crawlerScriptDir = scriptDir.toString();
 	}
 
 	@After
@@ -40,7 +40,7 @@ public class GroovyInterpreterTest {
 
 	@Test(expected = IllegalStateException.class)
 	public void testInitializeWithNonExistingScriptDir() {
-		configuration.scriptDir = "/tmp/NON_EXISTING_DIR";
+		configuration.crawlerScriptDir = "/tmp/NON_EXISTING_DIR";
 		testable = GroovyInterpreterImpl.newInstance(configuration);
 	}
 

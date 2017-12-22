@@ -9,37 +9,44 @@ import static org.mockito.Mockito.*;
 import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_CONTENT;
 import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_IMAGE_URL;
 
-import com.codahale.metrics.MetricRegistry;
 import edu.uci.ics.crawler4j.url.WebURL;
 import java.io.IOException;
 import java.util.HashMap;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringRunner;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
+import ru.nlp_project.story_line2.crawler.IMetricsManager;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
+import ru.nlp_project.story_line2.crawler.impl.ContentProcessorImplTest.TestClass;
 
+@RunWith(SpringRunner.class)
+// @SpringBootTest()
+@ContextConfiguration(classes = TestClass.class)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ContentProcessorImplTest {
 
+	@Autowired
 	private ContentProcessorImpl testable;
+
+	@Autowired
 	private IMongoDBClient mongoDBClient;
+
+	@Autowired
 	private IGroovyInterpreter groovyInterpreter;
 	private WebURL webUrl;
-	private CrawlerConfiguration configuration;
+
 
 	@Before
 	public void setUp() {
 		webUrl = new WebURL();
 		webUrl.setURL("https://www.bnkomi.ru/data/news/60691/");
-		mongoDBClient = mock(IMongoDBClient.class);
-		groovyInterpreter = mock(IGroovyInterpreter.class);
-		configuration = new CrawlerConfiguration();
-
-		testable = new ContentProcessorImpl();
-		testable.crawlerConfiguration = configuration;
-		testable.dbClientManager = mongoDBClient;
-		testable.groovyInterpreter = groovyInterpreter;
-		testable.metricRegistry = new MetricRegistry();
 		testable.initialize("test.source");
 	}
 
@@ -122,6 +129,36 @@ public class ContentProcessorImplTest {
 		webUrl.setURL("https://www.rambler.ru/data/news/60691/");
 
 		assertThat(testable.shouldVisit(webUrl), is(true));
+
+	}
+
+
+	public static class TestClass {
+
+		@Bean
+		public CrawlerConfiguration crawlerConfiguration() {
+			return new CrawlerConfiguration();
+		}
+
+		@Bean
+		public ContentProcessorImpl contentProcessor() {
+			return new ContentProcessorImpl();
+		}
+
+		@Bean
+		protected IMetricsManager metricsManager() {
+			return mock(IMetricsManager.class);
+		}
+
+		@Bean
+		public IGroovyInterpreter groovyInterpreter() {
+			return mock(IGroovyInterpreter.class);
+		}
+
+		@Bean
+		public IMongoDBClient mongoDBClient() {
+			return mock(IMongoDBClient.class);
+		}
 
 	}
 

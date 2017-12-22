@@ -67,20 +67,20 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 	}
 
 	private void initialize(CrawlerConfiguration configuration) throws IllegalStateException {
-		File dir = new File(configuration.scriptDir);
+		File dir = new File(configuration.crawlerScriptDir);
 		if (!dir.isDirectory() || !dir.exists()) {
 			throw new IllegalStateException(
-					String.format("'%s' not exists.", configuration.scriptDir));
+					String.format("'%s' not exists.", configuration.crawlerScriptDir));
 		}
 		sourceMap = new HashMap<>();
 		try {
 			scriptEngine = createGroovyScriptEngine(configuration);
-			Collection<File> files = FileUtils.listFiles(new File(configuration.scriptDir),
+			Collection<File> files = FileUtils.listFiles(new File(configuration.crawlerScriptDir),
 					new String[]{GROOVY_EXT_NAME}, true);
 
 			if (files.isEmpty()) {
 				throw new IllegalStateException(
-						String.format("No script files in '%s'.", configuration.scriptDir));
+						String.format("No script files in '%s'.", configuration.crawlerScriptDir));
 			}
 
 			for (File file : files) {
@@ -103,7 +103,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
 	private GroovyScriptEngine createGroovyScriptEngine(CrawlerConfiguration configuration)
 			throws IOException {
-		GroovyScriptEngine result = new GroovyScriptEngine(configuration.scriptDir);
+		GroovyScriptEngine result = new GroovyScriptEngine(configuration.crawlerScriptDir);
 		CompilerConfiguration compilerConfiguration = new CompilerConfiguration();
 		compilerConfiguration.setRecompileGroovySource(true);
 		result.setConfig(compilerConfiguration);
@@ -128,8 +128,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 		} catch (IllegalAccessException | IllegalArgumentException
 				e) {
 			throw new IllegalStateException(
-					String.format("Error while gettings 'source' member (must be public static): ",
-							e.getMessage()), e);
+					"Error while getting 'source' member (must be public static): " + e.getMessage(), e);
 		}
 		return source;
 
@@ -143,7 +142,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#shouldVisit(java.lang.String,
 	 * edu.uci.ics.crawler4j.url.WebURL)
 	 */
@@ -174,7 +173,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractRawData(java.lang.String,
 	 * edu.uci.ics.crawler4j.url.WebURL, java.lang.String)
 	 */
@@ -223,7 +222,7 @@ public class GroovyInterpreterImpl implements IGroovyInterpreter {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see ru.nlp_project.story_line2.crawler.IGroovyInterpreter#extractData(java.lang.String,
 	 * java.lang.String)
 	 */

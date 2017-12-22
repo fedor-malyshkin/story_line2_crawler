@@ -1,60 +1,39 @@
-# Количество потоков на сайт (лучше не более 4)
-crawler_per_site: 1
-# Папка со скриптами для парсинга контента сайтов
-crawler_script_dir: /tmp/crawler/scripts
-# Каталог для сохранения данных о результатах парсинга сайта (для каждого сайта
-# создается подпапка с именем домена для хранения соотвествующих данных)
-crawler_storage_dir: /tmp/crawler
-# строка подключения к MongoDB для сохранения результатаов анализа
-mongodb_connection_url: mongodb://localhost:27017/
+config:
+  # Количество потоков на сайт (лучше не более 4)
+  crawler_per_site: 1
+  # Папка со скриптами для парсинга контента сайтов
+  crawler_script_dir: /tmp/crawler/scripts
+  # Каталог для сохранения данных о результатах парсинга сайта (для каждого сайта
+  # создается подпапка с именем домена для хранения соотвествующих данных)
+  crawler_storage_dir: /tmp/crawler
+  # строка подключения к MongoDB для сохранения результатаов анализа
+  mongodb_connection_url: "mongodb://localhost:27017/"
 
 
-# Блок с настройками для анализируемых сайтов
-parse_sites:
-   # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
- #- source: bnkomi.ru
-   # На каждый сайт. стартовая страница для парсинга
- #  seed: http://bnkomi.ru
- #  cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
+  # Блок с настройками для анализируемых сайтов
+  parse_sites:
+    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
+    - source: bnkomi.ru
+    # На каждый сайт. стартовая страница для парсинга
+      seed: http://bnkomi.ru
+      cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
 
-feed_sites:
-   # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
- - source: komiinform.ru
-   # На каждый сайт. стартовая страница для парсинга
-   feed: http://komiinform.ru/rss/news/
-   # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
-   cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
+  feed_sites:
+    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
+    - source: komiinform.ru
+      # На каждый сайт. стартовая страница для парсинга
+      feed: http://komiinform.ru/rss/news/
+      # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
+      cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
 
-# metrics
-influxdb_metrics:
-   enabled: false
-   influxdb_host: "ci.nlp-project.ru"
-   influxdb_port: 8086	
-   influxdb_db: "storyline"
-   influxdb_user: ""
-   influxdb_password: ""
-   reporting_period: 30
-   
-   
+  # metrics
+  influxdb_metrics:
+    enabled: false
+    influxdb_host: "ci.nlp-project.ru"
+    influxdb_port: 8086
+    influxdb_db: "storyline"
+    influxdb_user: ""
+    influxdb_password: ""
+    reporting_period: 30
+    log_reporting_period: 30
 
-# Logging settings.
-logging:
-  # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
-  level: INFO
-  # Logger-specific levels.
-  loggers:
-    "ru.nlp_project.story_line2.crawler": DEBUG
-  
-  appenders:
-    - type: console
-      threshold: TRACE
-      target: stdout
-    - type: file
-      # The file to which current statements will be logged.
-      currentLogFilename: crawler.log
-      # When the log file rotates, the archived log will be renamed to this and gzipped. The
-      # %d is replaced with the previous day (yyyy-MM-dd). Custom rolling windows can be created
-      # by passing a SimpleDateFormat-compatible format as an argument: "%d{yyyy-MM-dd-hh}".
-      archivedLogFilenamePattern: crawler-%d.log.gz
-      # The number of archived files to keep.
-      archivedFileCount: 5

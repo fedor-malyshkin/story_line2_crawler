@@ -11,20 +11,19 @@ import java.io.StringReader;
 import java.net.URL;
 import java.util.Date;
 import java.util.List;
-import javax.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
-import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
 
 public class FeedSiteCrawler {
 
-	@Inject
-	protected IContentProcessor contentProcessor;
-	@Inject
+	@Autowired
+	private IContentProcessor contentProcessor;
+	@Autowired
 	protected IGroovyInterpreter groovyInterpreter;
 	private Logger log;
 	private FeedSiteConfiguration siteConfig;
@@ -66,7 +65,6 @@ public class FeedSiteCrawler {
 
 
 	void initialize() {
-		CrawlerBuilder.getComponent().inject(this);
 		contentProcessor.initialize(siteConfig.source);
 	}
 

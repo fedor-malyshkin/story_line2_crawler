@@ -6,9 +6,6 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.inject.Inject;
-
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.DisallowConcurrentExecution;
@@ -22,56 +19,28 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
-import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
 
 public class FeedSiteController {
-	@DisallowConcurrentExecution
-	public static class FeedSiteJon implements Job {
-
-		@Override
-		public void execute(JobExecutionContext context) throws JobExecutionException {
-			// JobKey key = context.getJobDetail().getKey();
-			JobDataMap dataMap = context.getJobDetail().getJobDataMap();
-			String source = dataMap.getString("source");
-			FeedSiteController siteController = controllers.get(source);
-			try {
-				if (siteController != null)
-					siteController.executeSheduledJob(context);
-			} catch (Exception e) {
-				// do nothing in any case
-				// see: http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
-			}
-		}
-
-	}
 
 	// global controllers list for shedule processing
-	public static Map<String, FeedSiteController> controllers = new HashMap<>();
-
-
-	@Inject
+	private static Map<String, FeedSiteController> controllers = new HashMap<>();
+	@Autowired
 	protected Scheduler scheduler;
-
-
-	@Inject
+	@Autowired
 	protected CrawlerConfiguration crawlerConfiguration;
-
 	private FeedSiteConfiguration siteConfig;
-
 	private Logger logger;
 	private JobDetail job;
 	private CronTrigger trigger;
 	private JobKey jobKey;
-
-
 	private FeedSiteCrawler feedSiteCrawler;
+
 
 	public FeedSiteController(FeedSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
-		CrawlerBuilder.getComponent().inject(this);
 		this.logger = LoggerFactory.getLogger(this.getClass());
 		// put in global controllers list (for quartz jobs)
 		controllers.put(siteConfig.source, this);
@@ -122,6 +91,27 @@ public class FeedSiteController {
 		try {
 			scheduler.deleteJob(jobKey);
 		} catch (SchedulerException e) {
+		}
+
+	}
+
+	@DisallowConcurrentExecution
+	public static class FeedSiteJon implements Job {
+
+		@Override
+		public void execute(JobExecutionContext context) throws JobExecutionException {
+			// JobKey key = context.getJobDetail().getKey();
+			JobDataMap dataMap = context.getJobDetail().getJobDataMap();
+			String source = dataMap.getString("source");
+			FeedSiteController siteController = controllers.get(source);
+			try {
+				if (siteController != null) {
+					siteController.executeSheduledJob(context);
+				}
+			} catch (Exception e) {
+				// do nothing in any case
+				// see: http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
+			}
 		}
 
 	}

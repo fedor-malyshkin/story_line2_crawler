@@ -4,14 +4,17 @@ import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
 
+import edu.uci.ics.crawler4j.crawler.CrawlConfig;
+import edu.uci.ics.crawler4j.crawler.CrawlController;
+import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
+import edu.uci.ics.crawler4j.fetcher.PageFetcher;
+import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
+import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.inject.Inject;
-
 import org.apache.commons.io.FileUtils;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -26,53 +29,27 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import edu.uci.ics.crawler4j.crawler.CrawlConfig;
-import edu.uci.ics.crawler4j.crawler.CrawlController;
-import edu.uci.ics.crawler4j.crawler.CrawlController.WebCrawlerFactory;
-import edu.uci.ics.crawler4j.fetcher.PageFetcher;
-import edu.uci.ics.crawler4j.robotstxt.RobotstxtConfig;
-import edu.uci.ics.crawler4j.robotstxt.RobotstxtServer;
+import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
-import ru.nlp_project.story_line2.crawler.dagger.CrawlerBuilder;
 
 public class ParseSiteController {
-	@DisallowConcurrentExecution
-	public static class ParseSiteJon implements Job {
 
-		@Override
-		public void execute(JobExecutionContext context) throws JobExecutionException {
-			// JobKey key = context.getJobDetail().getKey();
-			JobDataMap dataMap = context.getJobDetail().getJobDataMap();
-			String source = dataMap.getString("source");
-			ParseSiteController siteController = controllers.get(source);
-			try {
-				if (siteController != null)
-					siteController.executeSheduledJob(context);
-			} catch (Exception e) {
-				// do nothing in any case
-				// see:
-				// http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
-			}
-		}
-
-	}
-
-
-
-	// global controllers list for shedule processing
-	public static Map<String, ParseSiteController> controllers = new HashMap<>();
-
-
-	@Inject
-	protected Scheduler scheduler;
-
-	@Inject
-	protected CrawlerConfiguration crawlerConfiguration;
-
+	// global controllers list for schedule processing
+	static Map<String, ParseSiteController> controllers = new HashMap<>();
+	@Autowired
+	private Scheduler scheduler;
+	@Autowired
+	private CrawlerConfiguration crawlerConfiguration;
 	private ParseSiteConfiguration siteConfig;
-
+	WebCrawlerFactory<ParseSiteCrawler> factory = new WebCrawlerFactory<ParseSiteCrawler>() {
+		@Override
+		public ParseSiteCrawler newInstance() throws Exception {
+			ParseSiteCrawler result = new ParseSiteCrawler(siteConfig);
+			result.initialize();
+			return result;
+		}
+	};
 	private Logger logger;
 
 	private CrawlController crawlController;
@@ -83,18 +60,8 @@ public class ParseSiteController {
 
 	private JobKey jobKey;
 
-	WebCrawlerFactory<ParseSiteCrawler> factory = new WebCrawlerFactory<ParseSiteCrawler>() {
-		@Override
-		public ParseSiteCrawler newInstance() throws Exception {
-			ParseSiteCrawler result = new ParseSiteCrawler(siteConfig);
-			result.initialize();
-			return result;
-		}
-	};
-
 	public ParseSiteController(ParseSiteConfiguration siteConfig) {
 		this.siteConfig = siteConfig;
-		CrawlerBuilder.getComponent().inject(this);
 		this.logger = LoggerFactory.getLogger(this.getClass());
 		// put in global controllers list (for quartz jobs)
 		controllers.put(siteConfig.source, this);
@@ -102,12 +69,12 @@ public class ParseSiteController {
 
 	private void checkScriptsDirectory() {
 		try {
-			Collection<File> files = FileUtils.listFiles(new File(crawlerConfiguration.scriptDir),
-					new String[] {"groovy"}, true);
+			Collection<File> files = FileUtils.listFiles(new File(crawlerConfiguration.crawlerScriptDir),
+					new String[]{"groovy"}, true);
 			if (files.size() == 0) {
-				logger.error("Empty script directory {} ", crawlerConfiguration.scriptDir);
+				logger.error("Empty script directory {} ", crawlerConfiguration.crawlerScriptDir);
 				throw new IllegalStateException(
-						"Empty script directory: " + crawlerConfiguration.scriptDir);
+						"Empty script directory: " + crawlerConfiguration.crawlerScriptDir);
 			}
 		} catch (Exception e) {
 			logger.error(e.getMessage(), e);
@@ -116,7 +83,8 @@ public class ParseSiteController {
 	}
 
 	private CrawlConfig createCrawlConfig(ParseSiteConfiguration site) {
-		String crawlStorageFolder = crawlerConfiguration.storageDir + File.separator + site.source;
+		String crawlStorageFolder =
+				crawlerConfiguration.crawlerStorageDir + File.separator + site.source;
 
 		try {
 			FileUtils.forceMkdir(new File(crawlStorageFolder));
@@ -153,8 +121,9 @@ public class ParseSiteController {
 
 	public void executeSheduledJob(JobExecutionContext context) {
 		// rerun crawler if is finished (may be there is new pages)
-		if (crawlController.isFinished())
+		if (crawlController.isFinished()) {
 			startCrawler();
+		}
 		// re add seed oages
 		crawlController.addSeed(siteConfig.seed);
 	}
@@ -173,7 +142,6 @@ public class ParseSiteController {
 			logger.error(e.getMessage(), e);
 		}
 	}
-
 
 	private void initializeScheduleJob() {
 		jobKey = new JobKey("Job:" + siteConfig.source, "parse_site");
@@ -201,21 +169,45 @@ public class ParseSiteController {
 	}
 
 	private void startCrawler() {
-		if (crawlerConfiguration.async)
+		if (crawlerConfiguration.async) {
 			crawlController.startNonBlocking(factory, crawlerConfiguration.crawlerPerSite);
-		else
+		} else {
 			crawlController.start(factory, crawlerConfiguration.crawlerPerSite);
+		}
 	}
 
 	public void stop() {
 		try {
 			scheduler.deleteJob(jobKey);
-		} catch (SchedulerException e) {
+		} catch (SchedulerException ignored) {
 		}
 
-		if (!crawlController.isFinished())
+		if (!crawlController.isFinished()) {
 			crawlController.shutdown();
+		}
 		crawlController.waitUntilFinish();
+	}
+
+	@DisallowConcurrentExecution
+	public static class ParseSiteJon implements Job {
+
+		@Override
+		public void execute(JobExecutionContext context) throws JobExecutionException {
+			// JobKey key = context.getJobDetail().getKey();
+			JobDataMap dataMap = context.getJobDetail().getJobDataMap();
+			String source = dataMap.getString("source");
+			ParseSiteController siteController = controllers.get(source);
+			try {
+				if (siteController != null) {
+					siteController.executeSheduledJob(context);
+				}
+			} catch (Exception e) {
+				// do nothing in any case
+				// see:
+				// http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/tutorial-lesson-03.html
+			}
+		}
+
 	}
 
 }

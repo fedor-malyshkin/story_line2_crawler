@@ -39,7 +39,7 @@ public class MongoDBClientImpl implements IMongoDBClient {
 	}
 
 	public static MongoDBClientImpl newInstance(CrawlerConfiguration configuration) {
-		MongoDBClientImpl result = new MongoDBClientImpl(configuration.connectionUrl);
+		MongoDBClientImpl result = new MongoDBClientImpl(configuration.mongodbConnectionUrl);
 		result.initialize();
 		return result;
 	}
