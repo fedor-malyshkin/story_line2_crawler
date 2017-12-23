@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.ScheduledReporter;
 import com.codahale.metrics.Slf4jReporter;
-import com.codahale.metrics.Timer;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.HashMap;
@@ -37,11 +36,9 @@ import ru.nlp_project.story_line2.crawler.IMetricsManager;
  */
 public class MetricsManagerImpl implements IMetricsManager {
 
-
 	private final CrawlerConfiguration configuration;
 	private final MetricRegistry metricRegistry;
 	private final Logger log;
-	private HashMap<String, Timer> timerHashMap = new HashMap<>();
 	private HashMap<String, Counter> counterHashMap = new HashMap<>();
 	private ScheduledReporter inAppInfluxDBReporter;
 	private ScheduledReporter sysInfluxDBReporter;
@@ -78,11 +75,11 @@ public class MetricsManagerImpl implements IMetricsManager {
 					.skipIdleMetrics(false)
 					// hostname tag
 					.tag("host", hostName)
-					.tag("service", "server_web")
+					.tag("service", IMetricsManager.SERVICE)
 					// !!! converter
-					// al influxdbMetrics must be of form: "in_app.getImage.bnkomi_ru.invocation_count" ->
-					// measurement name: "invocation_count" with tags [scope=in_app, source=bnkomi_ru, method=getImage] value=0.1"
-					.transformer(new CategoriesMetricMeasurementTransformer("scope", "method", "source"))
+					// al influxdbMetrics must be of form: "in_app.bnkomi_ru.invocation_count" ->
+					// measurement name: "invocation_count" with tags [scope=in_app, source=bnkomi_ru] value=0.1"
+					.transformer(new CategoriesMetricMeasurementTransformer("scope", "source"))
 					.build();
 			inAppInfluxDBReporter.start(metricsConfiguration.reportingPeriod, TimeUnit.SECONDS);
 
@@ -98,7 +95,7 @@ public class MetricsManagerImpl implements IMetricsManager {
 					.skipIdleMetrics(false)
 					// hostname tag
 					.tag("host", hostName)
-					.tag("service", "server_web")
+					.tag("service", IMetricsManager.SERVICE)
 					.tag("scope", "sys")
 					// !!! converter
 					// al influxdbMetrics must be of form: "gauge.response.news_articles.article_id" ->
@@ -132,89 +129,66 @@ public class MetricsManagerImpl implements IMetricsManager {
 		sysInfluxDBReporter.stop();
 	}
 
-	@Override
-	public void incrementInvocation(String method, String source) {
-		Counter counter = getCounter(method, source);
-		counter.inc();
-	}
 
-	private Counter getCounter(String method, String source) {
-		Counter result = counterHashMap.get(method + "-" + source);
+	private Counter getCounter(String sourceName, String metricsName) {
+		Counter result = counterHashMap.get(sourceName + metricsName);
 		if (result == null) {
-			result = createCounter(method, source);
-			counterHashMap.put(method + "-" + source, result);
+			result = createCounter(sourceName, metricsName);
+			counterHashMap.put(sourceName, result);
 		}
 		return result;
 	}
 
-	private Counter createCounter(String method, String source) {
+	private Counter createCounter(String sourceName, String metricsName) {
 		String name = String
-				.format("%s.%s.%s.invocation_counter", IMetricsManager.IN_APP_PREFIX, method,
-						source.replace(".", "_"));
+				.format("%s.%s.%s", IMetricsManager.IN_APP_PREFIX,
+						sourceName.replace(".", "_"), metricsName);
 		return metricRegistry.counter(name);
 	}
 
-	@Override
-	public void durationInvocation(String method, String source, long duration) {
-		Timer timer = getTimer(method, source);
-		timer.update(duration, TimeUnit.MILLISECONDS);
-	}
 
 	@Override
 	public void incrementPagesProcessed(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_PAGE_PROCESSED).inc();
 	}
 
 	@Override
 	public void incrementPagesEmpty(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_PAGE_EMPTY).inc();
 	}
 
 	@Override
 	public void incrementPagesFull(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_PAGE_FULL).inc();
 	}
 
 	@Override
 	public void incrementExtractionEmptyPubDate(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_EXTRACTED_EMPTY_PUB_DATE).inc();
 	}
 
 	@Override
 	public void incrementExtractionEmptyTitle(String sourceName) {
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_EXTRACTED_EMPTY_TITLE).inc();
 
 	}
 
 	@Override
 	public void incrementExtractionEmptyContent(String sourceName) {
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_EXTRACTED_EMPTY_CONTENT).inc();
 
 	}
 
 	@Override
 	public void incrementExtractionEmptyImageUrl(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_EXTRACTED_EMPTY_IMAGE_URL).inc();
 	}
 
 	@Override
 	public void incrementLinkProcessed(String sourceName) {
-
+		getCounter(sourceName, IMetricsManager.METRIC_NAME_LINK_PROCESSED).inc();
 	}
 
-	private Timer getTimer(String method, String source) {
-		Timer result = timerHashMap.get(method + "-" + source);
-		if (result == null) {
-			result = createTimer(method, source);
-			timerHashMap.put(method + "-" + source, result);
-		}
-		return result;
-	}
-
-	private Timer createTimer(String method, String source) {
-		String name = String
-				.format("%s.%s.%s.invocation_duration", IMetricsManager.IN_APP_PREFIX, method,
-						source.replace(".", "_"));
-		return metricRegistry.timer(name);
-	}
 
 	private class PrefixMetricFilter implements MetricFilter {
 

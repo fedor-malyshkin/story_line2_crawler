@@ -32,11 +32,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
+import ru.nlp_project.story_line2.crawler.IContentProcessor;
 
 public class ParseSiteController {
 
 	// global controllers list for schedule processing
 	static Map<String, ParseSiteController> controllers = new HashMap<>();
+	private final IContentProcessor contentProcessor;
 	@Autowired
 	private Scheduler scheduler;
 	@Autowired
@@ -45,7 +47,7 @@ public class ParseSiteController {
 	WebCrawlerFactory<ParseSiteCrawler> factory = new WebCrawlerFactory<ParseSiteCrawler>() {
 		@Override
 		public ParseSiteCrawler newInstance() throws Exception {
-			ParseSiteCrawler result = new ParseSiteCrawler(siteConfig);
+			ParseSiteCrawler result = new ParseSiteCrawler(siteConfig, contentProcessor);
 			result.initialize();
 			return result;
 		}
@@ -60,9 +62,12 @@ public class ParseSiteController {
 
 	private JobKey jobKey;
 
-	public ParseSiteController(ParseSiteConfiguration siteConfig) {
+	public ParseSiteController(ParseSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
 		this.siteConfig = siteConfig;
-		this.logger = LoggerFactory.getLogger(this.getClass());
+		this.contentProcessor = contentProcessor;
+		String loggerClass = String
+				.format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
+		this.logger = LoggerFactory.getLogger(loggerClass);
 		// put in global controllers list (for quartz jobs)
 		controllers.put(siteConfig.source, this);
 	}

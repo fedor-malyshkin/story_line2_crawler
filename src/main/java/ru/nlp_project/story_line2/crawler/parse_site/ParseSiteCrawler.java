@@ -5,7 +5,6 @@ import edu.uci.ics.crawler4j.crawler.WebCrawler;
 import edu.uci.ics.crawler4j.parser.HtmlParseData;
 import edu.uci.ics.crawler4j.url.URLCanonicalizer;
 import edu.uci.ics.crawler4j.url.WebURL;
-import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
 
@@ -16,14 +15,15 @@ import ru.nlp_project.story_line2.crawler.IContentProcessor;
  */
 public class ParseSiteCrawler extends WebCrawler {
 
-	@Autowired
 	private IContentProcessor contentProcessor;
 	private ParseSiteConfiguration siteConfig;
 	private WebURL seedWebURL;
 	private WebURL seedWebURLCannoninicalized;
 
-	ParseSiteCrawler(ParseSiteConfiguration siteConfig) {
+	ParseSiteCrawler(ParseSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
 		this.siteConfig = siteConfig;
+		this.contentProcessor = contentProcessor;
+
 		this.seedWebURL = new WebURL();
 		this.seedWebURL.setURL(siteConfig.seed);
 

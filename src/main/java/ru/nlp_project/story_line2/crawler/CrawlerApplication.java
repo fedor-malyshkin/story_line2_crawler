@@ -1,6 +1,7 @@
 package ru.nlp_project.story_line2.crawler;
 
 import com.codahale.metrics.MetricRegistry;
+import com.mongodb.DBObject;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import javax.net.ssl.X509TrustManager;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -39,6 +41,9 @@ import ru.nlp_project.story_line2.crawler.parse_site.ParseSiteController;
 @EnableConfigurationProperties(CrawlerConfiguration.class)
 public class CrawlerApplication {
 
+	@Autowired
+	CrawlerConfiguration crawlerConfiguration;
+
 	private List<ParseSiteController> parseSites;
 	private List<FeedSiteController> feedSites;
 
@@ -53,7 +58,24 @@ public class CrawlerApplication {
 
 	@Bean
 	public IMongoDBClient mongoDBClient(CrawlerConfiguration configuration) {
-		return MongoDBClientImpl.newInstance(configuration);
+		// return MongoDBClientImpl.newInstance(configuration);
+		return new IMongoDBClient() {
+
+			@Override
+			public void shutdown() {
+
+			}
+
+			@Override
+			public void writeCrawlerEntry(DBObject dbObject, String source, String path) {
+				System.out.println(dbObject);
+			}
+
+			@Override
+			public boolean isCrawlerEntryExists(String source, String path) {
+				return false;
+			}
+		};
 	}
 
 	@Bean
@@ -81,17 +103,17 @@ public class CrawlerApplication {
 	}
 
 	@PostConstruct
-	public void start(CrawlerConfiguration configuration) throws Exception {
+	public void start() throws Exception {
+		initializeAllTrustCert();
+		initializeSites(crawlerConfiguration);
 		// time to startup service
 		scheduler().startDelayed(10);
-		initializeAllTrustCert();
-		initializeSites(configuration);
 	}
 
 	@PreDestroy
-	public void stop(CrawlerConfiguration configuration) throws Exception {
+	public void stop() throws Exception {
 		scheduler().shutdown(false);
-		mongoDBClient(configuration).shutdown();
+		mongoDBClient(crawlerConfiguration).shutdown();
 		// start
 		parseSites.forEach(ParseSiteController::stop);
 		feedSites.forEach(FeedSiteController::stop);
@@ -99,24 +121,20 @@ public class CrawlerApplication {
 
 	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 	@Bean
-	FeedSiteController feedSiteController(FeedSiteConfiguration configuration) {
-		FeedSiteController result = new FeedSiteController(configuration);
-		result.initialize();
-		return result;
+	FeedSiteController feedSiteController(FeedSiteConfiguration siteConfiguration) {
+		return new FeedSiteController(siteConfiguration, contentProcessor());
 	}
 
 
 	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 	@Bean
-	ParseSiteController parseSiteController(ParseSiteConfiguration configuration) {
-		ParseSiteController result = new ParseSiteController(configuration);
-		result.initialize();
-		return result;
+	ParseSiteController parseSiteController(ParseSiteConfiguration siteConfiguration) {
+		return new ParseSiteController(siteConfiguration, contentProcessor());
 	}
 
 	private void initializeSites(
 			CrawlerConfiguration configuration) throws Exception {
-		// parser_sites
+		// parser_sites (created after dependency injections, but not initialized)
 		parseSites = new ArrayList<>();
 		if (null != configuration.parseSites) {
 			for (ParseSiteConfiguration siteConfig : configuration.parseSites) {
@@ -124,13 +142,17 @@ public class CrawlerApplication {
 			}
 		}
 
-		// feed_sites
+		// feed_sites (created after dependency injections, but not initialized)
 		feedSites = new ArrayList<>();
 		if (null != configuration.feedSites) {
 			for (FeedSiteConfiguration siteConfig : configuration.feedSites) {
 				feedSites.add(feedSiteController(siteConfig));
 			}
 		}
+
+		// start
+		parseSites.forEach(ParseSiteController::initialize);
+		feedSites.forEach(FeedSiteController::initialize);
 
 		// start
 		parseSites.forEach(ParseSiteController::start);

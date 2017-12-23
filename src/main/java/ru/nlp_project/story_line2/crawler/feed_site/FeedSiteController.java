@@ -22,11 +22,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
+import ru.nlp_project.story_line2.crawler.IContentProcessor;
 
 public class FeedSiteController {
 
 	// global controllers list for shedule processing
 	private static Map<String, FeedSiteController> controllers = new HashMap<>();
+	private final IContentProcessor contentProcessor;
 	@Autowired
 	protected Scheduler scheduler;
 	@Autowired
@@ -39,9 +41,12 @@ public class FeedSiteController {
 	private FeedSiteCrawler feedSiteCrawler;
 
 
-	public FeedSiteController(FeedSiteConfiguration siteConfig) {
+	public FeedSiteController(FeedSiteConfiguration siteConfig , IContentProcessor contentProcessor) {
 		this.siteConfig = siteConfig;
-		this.logger = LoggerFactory.getLogger(this.getClass());
+		this.contentProcessor = contentProcessor;
+		String loggerClass = String
+				.format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
+		this.logger = LoggerFactory.getLogger(loggerClass);
 		// put in global controllers list (for quartz jobs)
 		controllers.put(siteConfig.source, this);
 	}
@@ -57,7 +62,7 @@ public class FeedSiteController {
 	}
 
 	private void initializeFeedSiteCrawler() {
-		feedSiteCrawler = new FeedSiteCrawler(siteConfig);
+		feedSiteCrawler = new FeedSiteCrawler(siteConfig, contentProcessor);
 		feedSiteCrawler.initialize();
 	}
 

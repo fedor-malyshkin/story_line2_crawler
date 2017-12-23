@@ -2,21 +2,20 @@ package ru.nlp_project.story_line2.crawler;
 
 public interface IMetricsManager {
 
-
-	public static final String METHOD_LIST_HEADERS = "list_headers";
-	public static final String METHOD_GET_NEWS_ARTICLE = "get_news_article";
 	public static final String IN_APP_PREFIX = "in_app";
-	public static final String METHOD_LIST_SOURCES = "list_sources";
-	public static final String NO_SOURCE = "-";
-	public static final String METHOD_GET_NEWS_ARTICLE_IMAGE = "get_news_article_image";
+	public static final String SERVICE = "crawler";
+	public static final String METRIC_NAME_PAGE_PROCESSED = "pages_processed";
+	public static final String METRIC_NAME_PAGE_EMPTY = "pages_empty";
+	public static final String METRIC_NAME_PAGE_FULL = "pages_full";
+	public static final String METRIC_NAME_EXTRACTED_EMPTY_PUB_DATE = "extracted_empty_pub_dates";
+	public static final String METRIC_NAME_EXTRACTED_EMPTY_CONTENT = "extracted_empty_contents";
+	public static final String METRIC_NAME_EXTRACTED_EMPTY_TITLE = "extracted_empty_titles";
+	public static final String METRIC_NAME_EXTRACTED_EMPTY_IMAGE_URL = "extracted_empty_image_urls";
+	public static final String METRIC_NAME_LINK_PROCESSED = "links_processed";
 
 	void initialize();
 
 	void shutdown();
-
-	void incrementInvocation(String method, String source);
-
-	void durationInvocation(String method, String source, long duration);
 
 	void incrementPagesProcessed(String sourceName);
 

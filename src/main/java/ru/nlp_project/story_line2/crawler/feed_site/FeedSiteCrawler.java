@@ -21,16 +21,20 @@ import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 
 public class FeedSiteCrawler {
 
-	@Autowired
-	private IContentProcessor contentProcessor;
+
 	@Autowired
 	protected IGroovyInterpreter groovyInterpreter;
+	private IContentProcessor contentProcessor;
 	private Logger log;
 	private FeedSiteConfiguration siteConfig;
 
-	FeedSiteCrawler(FeedSiteConfiguration siteConfig) {
+	FeedSiteCrawler(FeedSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
 		this.siteConfig = siteConfig;
-		log = LoggerFactory.getLogger(this.getClass());
+		this.contentProcessor = contentProcessor;
+
+		String loggerClass = String
+				.format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
+		this.log = LoggerFactory.getLogger(loggerClass);
 	}
 
 
