@@ -24,13 +24,13 @@ config:
       seed: http://bnkomi.ru
       cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
 
-#  feed_sites:
-#    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
-#    - source: komiinform.ru
-#      # На каждый сайт. стартовая страница для парсинга
-#      feed: http://komiinform.ru/rss/news/
-#      # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
-#      cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
+  feed_sites:
+    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
+    - source: komiinform.ru
+      # На каждый сайт. стартовая страница для парсинга
+      feed: http://komiinform.ru/rss/news/
+      # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
+      cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
 
   # metrics
   influxdb_metrics:

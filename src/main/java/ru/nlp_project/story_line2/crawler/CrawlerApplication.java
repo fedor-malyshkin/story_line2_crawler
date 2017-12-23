@@ -1,7 +1,6 @@
 package ru.nlp_project.story_line2.crawler;
 
 import com.codahale.metrics.MetricRegistry;
-import com.mongodb.DBObject;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -58,7 +57,8 @@ public class CrawlerApplication {
 
 	@Bean
 	public IMongoDBClient mongoDBClient(CrawlerConfiguration configuration) {
-		// return MongoDBClientImpl.newInstance(configuration);
+		 return MongoDBClientImpl.newInstance(configuration);
+/*
 		return new IMongoDBClient() {
 
 			@Override
@@ -76,6 +76,7 @@ public class CrawlerApplication {
 				return false;
 			}
 		};
+*/
 	}
 
 	@Bean
