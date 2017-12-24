@@ -35,7 +35,7 @@ public class GroovyInterpreterTest {
 
 	@After
 	public void tearDown() throws IOException {
-		FileUtils.forceDelete(scriptDir.toFile());
+		// FileUtils.forceDelete(scriptDir.toFile());
 	}
 
 	@Test(expected = IllegalStateException.class)
