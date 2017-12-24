@@ -1,6 +1,7 @@
 package ru.nlp_project.story_line2.crawler;
 
 import com.codahale.metrics.MetricRegistry;
+import com.mongodb.DBObject;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.Scope;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
@@ -56,9 +58,14 @@ public class CrawlerApplication {
 	}
 
 	@Bean
+	@Profile("!debug")
 	public IMongoDBClient mongoDBClient(CrawlerConfiguration configuration) {
-		 return MongoDBClientImpl.newInstance(configuration);
-/*
+		return MongoDBClientImpl.newInstance(configuration);
+	}
+
+	@Bean
+	@Profile("debug")
+	public IMongoDBClient mongoDBClientDebug(CrawlerConfiguration configuration) {
 		return new IMongoDBClient() {
 
 			@Override
@@ -76,8 +83,8 @@ public class CrawlerApplication {
 				return false;
 			}
 		};
-*/
 	}
+
 
 	@Bean
 	@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
