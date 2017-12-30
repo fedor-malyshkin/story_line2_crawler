@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
+import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 
 public class FeedSiteCrawler {
@@ -95,7 +96,7 @@ public class FeedSiteCrawler {
 			if (!siteConfig.parseForImage) {
 				imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());
 			}
-			contentProcessor.processHtml(webURL, content, title, publicationDate, imageUrl);
+			contentProcessor.processHtml(DataSourcesEnum.RSS, webURL, content, title, publicationDate, imageUrl);
 		} else {
 			throw new IllegalStateException("NIE!");
 		}

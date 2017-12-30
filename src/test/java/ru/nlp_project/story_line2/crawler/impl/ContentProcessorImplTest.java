@@ -21,6 +21,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
+import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
 import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 import ru.nlp_project.story_line2.crawler.IMetricsManager;
 import ru.nlp_project.story_line2.crawler.IMongoDBClient;
@@ -62,7 +63,7 @@ public class ContentProcessorImplTest {
 				.thenReturn("some text");
 		when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(true);
 
-		testable.processHtml(webUrl, "", "some", null, "Some");
+		testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", "some", null, "Some");
 
 		verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
 		verify(mongoDBClient).isCrawlerEntryExists(eq("test.source"), anyString());
@@ -76,7 +77,7 @@ public class ContentProcessorImplTest {
 		when(groovyInterpreter.extractRawData(anyString(), any(), anyString())).thenReturn("some");
 		when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(true);
 
-		testable.processHtml(webUrl, "");
+		testable.processHtml(DataSourcesEnum.PARSE, webUrl, "");
 
 		verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
 		verify(mongoDBClient).isCrawlerEntryExists(eq("test.source"), anyString());
@@ -93,7 +94,7 @@ public class ContentProcessorImplTest {
 		when(mongoDBClient.isCrawlerEntryExists(anyString(), anyString())).thenReturn(false);
 		when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(true);
 
-		testable.processHtml(webUrl, "", null, null, null);
+		testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", null, null, null);
 
 		verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
 		verify(mongoDBClient, atLeastOnce()).isCrawlerEntryExists(eq("test.source"), anyString());
@@ -110,7 +111,7 @@ public class ContentProcessorImplTest {
 		when(groovyInterpreter.extractData(anyString(), any(), anyString())).thenReturn(extrData);
 		when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(false);
 
-		testable.processHtml(webUrl, "", null, null, null);
+		testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", null, null, null);
 
 		verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
 	}
@@ -123,12 +124,12 @@ public class ContentProcessorImplTest {
 		webUrl = new WebURL();
 		webUrl.setURL("https://www.bnkomi.ru/data/news/60691/");
 
-		assertThat(testable.shouldVisit(webUrl), is(false));
+		assertThat(testable.shouldVisit(DataSourcesEnum.PARSE, webUrl), is(false));
 
 		webUrl = new WebURL();
 		webUrl.setURL("https://www.rambler.ru/data/news/60691/");
 
-		assertThat(testable.shouldVisit(webUrl), is(true));
+		assertThat(testable.shouldVisit(DataSourcesEnum.PARSE, webUrl), is(true));
 
 	}
 
