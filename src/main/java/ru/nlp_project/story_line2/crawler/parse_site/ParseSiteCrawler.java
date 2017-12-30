@@ -7,6 +7,7 @@ import edu.uci.ics.crawler4j.url.URLCanonicalizer;
 import edu.uci.ics.crawler4j.url.WebURL;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
+import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
 
 /**
  * Краулер для новостей.
@@ -48,7 +49,7 @@ public class ParseSiteCrawler extends WebCrawler {
 	public boolean shouldVisit(Page referringPage, WebURL url) {
 		// в случае если страница будет отвергнута -- она не будет проанализирована и самой
 		// библиотекой
-		return contentProcessor.shouldVisit(url);
+		return contentProcessor.shouldVisit(DataSourcesEnum.PARSE, url);
 	}
 
 	/**
@@ -61,7 +62,7 @@ public class ParseSiteCrawler extends WebCrawler {
 			HtmlParseData htmlParseData = (HtmlParseData) page.getParseData();
 			String html = htmlParseData.getHtml();
 
-			contentProcessor.processHtml(webURL, html);
+			contentProcessor.processHtml(DataSourcesEnum.PARSE, webURL, html);
 		}
 	}
 

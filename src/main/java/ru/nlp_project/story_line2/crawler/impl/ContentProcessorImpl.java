@@ -2,7 +2,6 @@ package ru.nlp_project.story_line2.crawler.impl;
 
 import com.mongodb.DBObject;
 import edu.uci.ics.crawler4j.url.WebURL;
-import java.io.IOException;
 import java.util.Date;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,23 +34,21 @@ public class ContentProcessorImpl implements IContentProcessor {
 		this.sourceName = source;
 		String loggerClass = String.format("%s[%s]", this.getClass().getCanonicalName(), sourceName);
 		log = LoggerFactory.getLogger(loggerClass);
-		// initialize metrics
-		String escapedSource = sourceName.replace(".", "_");
 	}
 
 
 	@Override
-	public void processHtml(WebURL webURL, String htmlContent) {
-		processHtml(webURL, htmlContent, null, null, null);
+	public void processHtml(DataSourcesEnum dataSource, WebURL webURL, String htmlContent) {
+		processHtml(dataSource, webURL, htmlContent, null, null, null);
 	}
 
 
 	@Override
-	public void processHtml(WebURL webURL, String content, String title,
+	public void processHtml(DataSourcesEnum dataSource, WebURL webURL, String content, String title,
 			Date publicationDate, String imageUrl) {
 		// если ранне набрали ссылок в базу, то теперь можно дополнительно проверить с
 		// актуальной версией скриптов - нужно ли посещать страницу
-		if (!shouldProcess(webURL)) {
+		if (!shouldProcess(dataSource, webURL)) {
 			return;
 		}
 
@@ -62,27 +59,31 @@ public class ContentProcessorImpl implements IContentProcessor {
 			return;
 		}
 
-		metricsManager.incrementPagesProcessed(sourceName);
+		metricsManager.incrementPagesProcessed(dataSource, sourceName);
 		String rawContent = groovyInterpreter.extractRawData(sourceName, webURL, content);
 		if (null == rawContent) {
-			metricsManager.incrementPagesEmpty(sourceName);
+			metricsManager.incrementPagesEmpty(dataSource, sourceName);
 			log.debug("No content {}:{} ({})", sourceName, webURL.getPath(), webURL.getURL());
 			return;
 		}
 
-		metricsManager.incrementPagesFull(sourceName);
-		// metrics
-		if (null == publicationDate) {
-			metricsManager.incrementExtractionEmptyPubDate(sourceName);
-		}
-		if (null == title || title.isEmpty()) {
-			metricsManager.incrementExtractionEmptyTitle(sourceName);
-		}
-		if (null == content || content.isEmpty()) {
-			metricsManager.incrementExtractionEmptyContent(sourceName);
-		}
-		if (null == imageUrl || imageUrl.isEmpty()) {
-			metricsManager.incrementExtractionEmptyImageUrl(sourceName);
+		metricsManager.incrementPagesFull(dataSource, sourceName);
+
+		// collect statistics only if data from RSS analysis
+		if (dataSource != DataSourcesEnum.PARSE) {
+			// metrics
+			if (null == publicationDate) {
+				metricsManager.incrementExtractionEmptyPubDate(dataSource, sourceName);
+			}
+			if (null == title || title.isEmpty()) {
+				metricsManager.incrementExtractionEmptyTitle(dataSource, sourceName);
+			}
+			if (null == content || content.isEmpty()) {
+				metricsManager.incrementExtractionEmptyContent(dataSource, sourceName);
+			}
+			if (null == imageUrl || imageUrl.isEmpty()) {
+				metricsManager.incrementExtractionEmptyImageUrl(dataSource, sourceName);
+			}
 		}
 
 		// тут не надо ничего корректировать
@@ -107,16 +108,15 @@ public class ContentProcessorImpl implements IContentProcessor {
 	}
 
 	private DBObject serialize(String source, String path, String url, Date publicationDate,
-			Date processingDate, String title, String imageUrl, String rawContent)
-			throws IOException {
+			Date processingDate, String title, String imageUrl, String rawContent) {
 		CrawlerNewsArticle article = new CrawlerNewsArticle(source, path, url, publicationDate,
 				processingDate, title, imageUrl, rawContent);
 		return BSONUtils.serialize(article);
 	}
 
 	@Override
-	public boolean shouldVisit(WebURL url) {
-		metricsManager.incrementLinkProcessed(sourceName);
+	public boolean shouldVisit(DataSourcesEnum dataSource, WebURL url) {
+		metricsManager.incrementLinkProcessed(dataSource, sourceName);
 		// необходимо учитывать, что тут может возникнуть ситуация, когда в анализируемом сайте
 		// имеем ссылку на другой сайт в анализе и в таком случае надо ответить "нет" - нужные
 		// данные лишь для основного сайта, другие данные получим в другом парсере
@@ -126,7 +126,7 @@ public class ContentProcessorImpl implements IContentProcessor {
 	}
 
 	@Override
-	public boolean shouldProcess(WebURL url) {
+	public boolean shouldProcess(DataSourcesEnum dataSource, WebURL url) {
 		return groovyInterpreter.shouldProcess(sourceName, url);
 	}
 

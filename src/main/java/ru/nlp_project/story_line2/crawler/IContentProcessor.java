@@ -10,13 +10,13 @@ public interface IContentProcessor {
 	 * своём нужно (особенно если это текстовый контент), т.к. это формирует базу ссылок для
 	 * последующего анализаю
 	 */
-	boolean shouldVisit(WebURL url);
+	boolean shouldVisit(DataSourcesEnum dataSource,WebURL url);
 
 	/**
 	 * Следует ли обрабатывать?. Тут надо подходить уже значительно более скептически, т.к.
 	 * большинство ссылок на сайте не содержат данных для анализа.
 	 */
-	boolean shouldProcess(WebURL url);
+	boolean shouldProcess(DataSourcesEnum dataSource,WebURL url);
 
 	/**
 	 * Выполнить обработку HTML содержимого страницы или feed'а.
@@ -36,7 +36,7 @@ public interface IContentProcessor {
 	 * @param webURL ссылка на страницу
 	 * @param htmlContent HTML содержимое
 	 */
-	void processHtml(WebURL webURL, String htmlContent);
+	void processHtml(DataSourcesEnum dataSource, WebURL webURL, String htmlContent);
 
 	/**
 	 * Выполнить обработку HTML содержимого страницы или feed'а.
@@ -61,9 +61,14 @@ public interface IContentProcessor {
 	 * @param imageUrl возможно ссылка на картинку (если не null - не следует замещать результатами
 	 * анализа)
 	 */
-	void processHtml(WebURL webURL, String htmlContent, String title, Date publicationDate,
+	void processHtml(DataSourcesEnum dataSource, WebURL webURL, String htmlContent, String title,
+			Date publicationDate,
 			String imageUrl);
 
 	void initialize(String source);
+
+	enum DataSourcesEnum {
+		PARSE, RSS;
+	}
 
 }

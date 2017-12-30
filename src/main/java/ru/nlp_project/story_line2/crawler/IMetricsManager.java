@@ -1,5 +1,7 @@
 package ru.nlp_project.story_line2.crawler;
 
+import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
+
 public interface IMetricsManager {
 
 	public static final String IN_APP_PREFIX = "in_app";
@@ -17,19 +19,19 @@ public interface IMetricsManager {
 
 	void shutdown();
 
-	void incrementPagesProcessed(String sourceName);
+	void incrementPagesProcessed(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementPagesEmpty(String sourceName);
+	void incrementPagesEmpty(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementPagesFull(String sourceName);
+	void incrementPagesFull(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementExtractionEmptyPubDate(String sourceName);
+	void incrementExtractionEmptyPubDate(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementExtractionEmptyTitle(String sourceName);
+	void incrementExtractionEmptyTitle(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementExtractionEmptyContent(String sourceName);
+	void incrementExtractionEmptyContent(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementExtractionEmptyImageUrl(String sourceName);
+	void incrementExtractionEmptyImageUrl(DataSourcesEnum dataSource, String sourceName);
 
-	void incrementLinkProcessed(String sourceName);
+	void incrementLinkProcessed(DataSourcesEnum dataSource, String sourceName);
 }
