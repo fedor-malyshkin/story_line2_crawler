@@ -23,83 +23,86 @@ import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
 public class FeedSiteCrawler {
 
 
-	@Autowired
-	protected IGroovyInterpreter groovyInterpreter;
-	private IContentProcessor contentProcessor;
-	private Logger log;
-	private FeedSiteConfiguration siteConfig;
+  @Autowired
+  protected IGroovyInterpreter groovyInterpreter;
 
-	FeedSiteCrawler(FeedSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
-		this.siteConfig = siteConfig;
-		this.contentProcessor = contentProcessor;
+  private IContentProcessor contentProcessor;
 
-		String loggerClass = String
-				.format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
-		this.log = LoggerFactory.getLogger(loggerClass);
-	}
+  private Logger log;
 
+  private FeedSiteConfiguration siteConfig;
 
-	/**
-	 * Метод фактически выполняющий анализ и вызываемый на периодической основе.
-	 */
-	public void crawlFeed() {
-		try {
-			String feed = getFeed();
-			parseFeed(feed);
-		} catch (Exception e) {
-			log.error("Error while crawling {}:{}", siteConfig.source, siteConfig.feed, e);
-		}
-	}
+  FeedSiteCrawler(FeedSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
+    this.siteConfig = siteConfig;
+    this.contentProcessor = contentProcessor;
+
+    String loggerClass = String
+        .format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
+    this.log = LoggerFactory.getLogger(loggerClass);
+  }
 
 
-	private String getFeed() throws IOException {
-		InputStream inputStream = new URL(siteConfig.feed).openStream();
-		return IOUtils.toString(inputStream);
-	}
+  /**
+   * Метод фактически выполняющий анализ и вызываемый на периодической основе.
+   */
+  public void crawlFeed() {
+    try {
+      String feed = getFeed();
+      parseFeed(feed);
+    } catch (Exception e) {
+      log.error("Error while crawling {}:{}", siteConfig.source, siteConfig.feed, e);
+    }
+  }
 
 
-	protected String getImageUrlFromEnclosures(List<SyndEnclosure> enclosures) {
-		// gif|jpg|png|jpeg
-		for (SyndEnclosure enc : enclosures) {
-			if (enc.getType().matches("image/(gif|jpg|png|jpeg)")) {
-				return enc.getUrl();
-			}
-		}
-		return null;
-	}
+  private String getFeed() throws IOException {
+    InputStream inputStream = new URL(siteConfig.feed).openStream();
+    return IOUtils.toString(inputStream);
+  }
 
 
-	void initialize() {
-		contentProcessor.initialize(siteConfig.source);
-	}
+  protected String getImageUrlFromEnclosures(List<SyndEnclosure> enclosures) {
+    // gif|jpg|png|jpeg
+    for (SyndEnclosure enc : enclosures) {
+      if (enc.getType().matches("image/(gif|jpg|png|jpeg)")) {
+        return enc.getUrl();
+      }
+    }
+    return null;
+  }
 
 
-	protected void parseFeed(String feed) throws Exception {
-		SyndFeedInput input = new SyndFeedInput();
-		SyndFeed syndFeed = input.build(new StringReader(feed));
-		for (SyndEntry entry : syndFeed.getEntries()) {
-			processSyndEntry(entry);
-		}
-	}
+  void initialize() {
+    contentProcessor.initialize(siteConfig.source);
+  }
 
 
-	private void processSyndEntry(SyndEntry entry) {
-		Date publicationDate = entry.getPublishedDate();
-		String title = entry.getTitle().trim();
+  protected void parseFeed(String feed) throws Exception {
+    SyndFeedInput input = new SyndFeedInput();
+    SyndFeed syndFeed = input.build(new StringReader(feed));
+    for (SyndEntry entry : syndFeed.getEntries()) {
+      processSyndEntry(entry);
+    }
+  }
 
-		WebURL webURL = new WebURL();
-		String uri = entry.getUri().trim();
-		webURL.setURL(uri);
-		if (!siteConfig.parseForContent) {
-			String content = entry.getDescription().getValue();
-			String imageUrl = null;
-			if (!siteConfig.parseForImage) {
-				imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());
-			}
-			contentProcessor.processHtml(DataSourcesEnum.RSS, webURL, content, title, publicationDate, imageUrl);
-		} else {
-			throw new IllegalStateException("NIE!");
-		}
-	}
+
+  private void processSyndEntry(SyndEntry entry) {
+    Date publicationDate = entry.getPublishedDate();
+    String title = entry.getTitle().trim();
+
+    WebURL webURL = new WebURL();
+    String uri = entry.getUri().trim();
+    webURL.setURL(uri);
+    if (!siteConfig.parseForContent) {
+      String content = entry.getDescription().getValue();
+      String imageUrl = null;
+      if (!siteConfig.parseForImage) {
+        imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());
+      }
+      contentProcessor.processHtml(DataSourcesEnum.RSS, webURL, content, title, publicationDate, imageUrl);
+    } else {
+      throw new IllegalStateException("NIE!");
+    }
+  }
 
 }

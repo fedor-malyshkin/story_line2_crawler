@@ -1,8 +1,8 @@
 package ru.nlp_project.story_line2.crawler;
 
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-import org.assertj.core.api.Assertions;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfigurationTest.TestClass;
 
 // WARN: for unknown reasons '@TestPropertySource' does not work with YAML
@@ -21,39 +22,45 @@ import ru.nlp_project.story_line2.crawler.CrawlerConfigurationTest.TestClass;
 @ContextConfiguration(classes = TestClass.class)
 public class CrawlerConfigurationTest {
 
+  @Autowired
+  CrawlerConfiguration testable;
 
-	@Autowired
-	CrawlerConfiguration testable;
+  @BeforeClass
+  public static void setUpClass() {
+    // WARN: for unknown reasons '@TestPropertySource' does not work with YAML
+    System.setProperty("spring.config.location",
+                       "src/test/resources/ru/nlp_project/story_line2/crawler/crawler_config.yml");
+  }
 
-	@BeforeClass
-	public static void setUpClass() {
-		// WARN: for unknown reasons '@TestPropertySource' does not work with YAML
-		System.setProperty("spring.config.location",
-				"src/test/resources/ru/nlp_project/story_line2/crawler/crawler_config.yml");
-	}
+  @Test
+  public void testMainConfig() {
+    assertThat(testable.isAsync()).isTrue();
+    assertThat(testable.getCrawlerPerSite()).isEqualTo(1);
+    assertThat(testable.getParseSites()).hasSize(1);
+    assertThat(testable.getFeedSites()).hasSize(1);
+    assertThat(testable.getInfluxdbMetrics()).isNotNull();
+    assertThat(testable.getCrawlerStorageDir()).isEqualTo("/tmp/crawler");
+    assertThat(testable.getKafkaConnectionUrl()).isEqualTo("localhost:9092");
+    assertThat(testable.getSkipImagesOlderDays()).isEqualTo(30);
+  }
 
-	@Test
-	public void testToString() {
-		Assertions.assertThat(testable.toString()).isEqualToIgnoringCase(
-				"CrawlerConfiguration{async=true, crawlerPerSite=1, crawlerScriptDir='/tmp/crawler/scripts', "
-						+ "parseSites=["
-						+ "ParseSiteConfiguration{source='bnkomi.ru', seed='http://bnkomi.ru', cronSchedule='0 0/5 * * * ?'}"
-						+ "], feedSites=["
-						+ "FeedSiteConfiguration{source='komiinform.ru', feed='http://komiinform.ru/rss/news/', cronSchedule='0 0/1 * * * ?', parseForContent=false, parseForImage=false}"
-						+ "], "
-						+ "influxdbMetrics=MetricsConfiguration{enabled=false, influxdbHost='ci.nlp-project.ru', influxdbPort=8086, influxdbDb='storyline', influxdbUser='', influxdbPassword='', reportingPeriod=30, logReportingPeriod=30}, "
-						+ "crawlerStorageDir='/tmp/crawler', mongodbConnectionUrl='mongodb://localhost:27017/', skipImagesOlderDays=30}");
-	}
+  @Test
+  public void testParseSitesConfig() {
+    ParseSiteConfiguration siteConfiguration = testable.getParseSites().get(0);
+    assertThat(siteConfiguration.getCronSchedule()).isEqualTo("0 0/5 * * * ?");
+    assertThat(siteConfiguration.getSeed()).isEqualTo("http://bnkomi.ru");
+    assertThat(siteConfiguration.getSource()).isEqualTo("bnkomi.ru");
+  }
 
 
-	@EnableConfigurationProperties(CrawlerConfiguration.class)
-	public static class TestClass {
+  @EnableConfigurationProperties(CrawlerConfiguration.class)
+  public static class TestClass {
 
-		@Bean
-		protected IMetricsManager metricsManager() {
-			return mock(IMetricsManager.class);
-		}
-	}
+    @Bean
+    protected IMetricsManager metricsManager() {
+      return mock(IMetricsManager.class);
+    }
+  }
 
 
 }
