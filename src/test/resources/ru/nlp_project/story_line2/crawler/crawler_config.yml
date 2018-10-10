@@ -12,25 +12,25 @@ config:
   # Каталог для сохранения данных о результатах парсинга сайта (для каждого сайта
   # создается подпапка с именем домена для хранения соотвествующих данных)
   crawler_storage_dir: /tmp/crawler
-  # строка подключения к MongoDB для сохранения результатаов анализа
-  mongodb_connection_url: "mongodb://localhost:27017/"
+  # строка подключения к Kafka для сохранения результатаов анализа
+  kafka_connection_url: localhost:9092
 
 
   # Блок с настройками для анализируемых сайтов
   parse_sites:
-    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
-    - source: bnkomi.ru
+  # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
+  - source: bnkomi.ru
     # На каждый сайт. стартовая страница для парсинга
-      seed: http://bnkomi.ru
-      cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
+    seed: http://bnkomi.ru
+    cron_schedule: "0 0/5 * * * ?" # Fire every 5 minutes
 
   feed_sites:
-    # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
-    - source: komiinform.ru
-      # На каждый сайт. стартовая страница для парсинга
-      feed: http://komiinform.ru/rss/news/
-      # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
-      cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
+  # На каждый сайт. Название домена (будет использоваться для идентфикации и записи в БД)
+  - source: komiinform.ru
+    # На каждый сайт. стартовая страница для парсинга
+    feed: http://komiinform.ru/rss/news/
+    # Расписание в формате cron (http://www.quartz-scheduler.org/documentation/quartz-2.x/tutorials/crontrigger.html)
+    cron_schedule: "0 0/1 * * * ?" # Fire every 5 minutes
 
   # metrics
   influxdb_metrics:
