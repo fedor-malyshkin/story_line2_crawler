@@ -5,12 +5,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import kafka.server.KafkaConfig;
@@ -46,6 +48,7 @@ public class KafkaLocal {
   private AdminClient adminClient;
   @Getter
   private KafkaConsumer<String, String> consumer;
+  private Semaphore subscribeLatch = new Semaphore(1);
 
   public KafkaLocal(int port, Properties properties, ZooKeeperLocal zookeeperLocal) {
     this.initialProps = properties;
@@ -56,8 +59,11 @@ public class KafkaLocal {
 
   public void stop() {
     adminClient.close();
-    consumer.close();
     kafka.shutdown();
+  }
+
+  public void releaseConsumer() {
+    consumer.close();
   }
 
   public void start() throws Exception {
@@ -68,6 +74,9 @@ public class KafkaLocal {
     kafka = new KafkaServerStartable(kafkaConfig);
     kafka.startup();
     adminClient = createAdminClient();
+  }
+
+  public void initConsumer() {
     consumer = createConsumer();
   }
 
@@ -113,7 +122,8 @@ public class KafkaLocal {
     Properties props = new Properties();
     props.put("bootstrap.servers", getConnectionUrl());
     props.put("group.id", "test-consumer");
-    props.put("enable.auto.commit", "true");
+    props.put("enable.auto.commit", "false");
+    props.put("auto.offset.reset", "earliest");
     props.put("auto.commit.interval.ms", "100");
     props.put("key.deserializer", DEFAULT_DESERIALIZER);
     props.put("value.deserializer", DEFAULT_DESERIALIZER);
@@ -140,24 +150,27 @@ public class KafkaLocal {
     new TryCatchCaller<>(() -> all.get(DEFAULT_TIMEOUT_MILLS, TimeUnit.MILLISECONDS)).call();
   }
 
-
-  public ConsumerRecord<String, String> getMessageFromTopic(String topic) {
-    return getMessageFromTopic(topic, false);
+  public ConsumerRecord<String, String> getMessageFromTopic(String topic) throws InterruptedException {
+    return getMessage(topic, DEFAULT_TIMEOUT_MILLS);
   }
 
-  public ConsumerRecord<String, String> getMessageFromTopic(String topic, boolean seekToStart) {
-    return getMessageFromTopic(topic, seekToStart, DEFAULT_TIMEOUT_MILLS);
-  }
-
-  public ConsumerRecord<String, String> getMessageFromTopic(String topic, boolean seekToStart, int mills) {
+  private ConsumerRecords<String, String> getConsumerRecordsFromTopic(String topic, int mills) {
     consumer.subscribe(Collections.singletonList(topic));
-    if (seekToStart) {
-      consumer.seekToBeginning(Collections.emptyList());
-    }
-    ConsumerRecords<String, String> consumerRecords = consumer.poll(duration(mills));
-    Assertions.assertThat(consumerRecords.count()).isGreaterThan(0);
-    Iterable<ConsumerRecord<String, String>> records = consumerRecords.records(topic);
-    return Iterators.get(records.iterator(), 0);
+    return consumer.poll(duration(mills));
+  }
+
+  public List<ConsumerRecord<String, String>> getMessages(String topic, int mills) throws InterruptedException {
+    ConsumerRecords<String, String> consumerRecords = getConsumerRecordsFromTopic(topic, mills);
+    Assertions.assertThat(consumerRecords.isEmpty()).isFalse();
+    List<ConsumerRecord<String, String>> result = new ArrayList<>();
+    Iterators.addAll(result, consumerRecords.iterator());
+    return result;
+  }
+
+  public ConsumerRecord<String, String> getMessage(String topic, int mills) throws InterruptedException {
+    ConsumerRecords<String, String> consumerRecords = getConsumerRecordsFromTopic(topic, mills);
+    Assertions.assertThat(consumerRecords.isEmpty()).isFalse();
+    return Iterators.get(consumerRecords.iterator(), 0);
   }
 
   private Duration duration(int mills) {
@@ -166,8 +179,18 @@ public class KafkaLocal {
 
   public void createTopic(String topic) {
     NewTopic newTopic = new NewTopic(topic, 1, (short) 1);
-    CreateTopicsResult createTopicsResult = adminClient.createTopics(Arrays.asList(newTopic));
+    CreateTopicsResult createTopicsResult = adminClient.createTopics(Collections.singletonList(newTopic));
     new TryCatchCaller<>(createTopicsResult::all).call();
+  }
+
+  public boolean isNoMessages(String topic) {
+    return isNoMessages(topic, DEFAULT_TIMEOUT_MILLS);
+  }
+
+
+  public boolean isNoMessages(String topic, int mills) {
+    ConsumerRecords<String, String> consumerRecords = getConsumerRecordsFromTopic(topic, mills);
+    return consumerRecords.isEmpty();
   }
 
 

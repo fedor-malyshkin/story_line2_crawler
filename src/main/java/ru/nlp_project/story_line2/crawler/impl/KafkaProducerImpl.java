@@ -6,10 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.clients.producer.RecordMetadata;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.IKafkaProducer;
 import ru.nlp_project.story_line2.crawler.model.CrawlerNewsArticle;
@@ -34,6 +32,7 @@ public class KafkaProducerImpl implements IKafkaProducer {
     Properties props = new Properties();
     props.put("bootstrap.servers", configuration.getKafkaConnectionUrl());
     props.put("acks", "all");
+    props.put("linger.ms", "5");
     props.put("retries", 5);
     props.put("key.serializer", DEFAULT_KAFKA_SERIALIZER);
     props.put("value.serializer", DEFAULT_KAFKA_SERIALIZER);
@@ -49,13 +48,6 @@ public class KafkaProducerImpl implements IKafkaProducer {
   public void writePageCrawledEvent(String sourceName, CrawlerNewsArticle object) throws Exception {
     Map<String, Object> map = formatMapForPageCrawledEvent(object);
     producer.send(createProducerRecord(sourceName, serializeMap(map)));
-    producer.send(createProducerRecord(sourceName, serializeMap(map)), new Callback() {
-      @Override
-      public void onCompletion(RecordMetadata metadata, Exception exception) {
-        System.out.println("metadata: " + metadata);
-        System.out.println("exception: " + exception);
-      }
-    });
   }
 
   private ProducerRecord<String, String> createProducerRecord(String key, String value) {

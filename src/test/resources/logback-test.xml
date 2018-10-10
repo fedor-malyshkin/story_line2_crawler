@@ -1,4 +1,4 @@
-<configuration debug="true">
+<configuration debug="false">
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder
@@ -12,7 +12,7 @@
 
   <logger name="ru.nlp_project.story_line2.server_storm" level="DEBUG"/>
 
-  <root level="INFO">
+  <root level="WARN">
     <appender-ref ref="STDOUT"/>
   </root>
 </configuration>

@@ -10,15 +10,22 @@ import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_CON
 import static ru.nlp_project.story_line2.crawler.IGroovyInterpreter.EXTR_KEY_IMAGE_URL;
 
 import edu.uci.ics.crawler4j.url.WebURL;
-import java.io.IOException;
+import java.io.File;
+import java.nio.charset.Charset;
 import java.util.HashMap;
+import org.apache.commons.io.IOUtils;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.annotation.DirtiesContext;
@@ -35,11 +42,11 @@ import ru.nlp_project.story_line2.crawler.impl.ContentProcessorImplTest.TestClas
 
 
 @RunWith(SpringRunner.class)
-// @SpringBootTest()
 @ContextConfiguration(classes = TestClass.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 public class ContentProcessorImplTest {
 
+  private static final String CLASSPATH_PREFIX = "/ru/nlp_project/story_line2/crawler/impl/ContentProcessorImplTest";
   private static KafkaLocal kafkaLocal;
   private static ZooKeeperLocal zookeeperLocal;
 
@@ -54,6 +61,8 @@ public class ContentProcessorImplTest {
 
   private WebURL webUrl;
 
+  @Rule
+  public TestName testName = new TestName();
 
   @BeforeClass
   public static void setUpClass() throws Exception {
@@ -71,6 +80,7 @@ public class ContentProcessorImplTest {
 
   @After
   public void tearDown() {
+    kafkaLocal.releaseConsumer();
     kafkaLocal.deleteAllTopics();
   }
 
@@ -81,47 +91,43 @@ public class ContentProcessorImplTest {
     webUrl.setURL("https://www.bnkomi.ru/data/news/60691/");
     testable.initialize("test.source");
     kafkaLocal.createTopic(IKafkaProducer.DEFAULT_KAFKA_SERIALIZER);
+    kafkaLocal.initConsumer();
   }
 
 
   @Test
-  public void testProcessHtmlFromFeed() throws IOException, InterruptedException {
-    Thread.sleep(10*1_000);
+  public void testProcessHtmlFromFeed() throws InterruptedException {
     HashMap<String, Object> extrData = new HashMap<>();
     extrData.put(EXTR_KEY_IMAGE_URL, "image_url");
     extrData.put(EXTR_KEY_CONTENT, "test_content");
-
     when(groovyInterpreter.extractRawData(eq("test.source"), any(), anyString()))
         .thenReturn("some text");
     when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(true);
-
     testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", "some", null, "Some");
 
     verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
-    Thread.sleep(10*1_000);
-    kafkaLocal.getMessageFromTopic(IKafkaProducer.PRODUCER_TOPIC, true);
-
-
+    ConsumerRecord<String, String> record = kafkaLocal.getMessageFromTopic(IKafkaProducer.PRODUCER_TOPIC);
+    Assertions.assertThat(record).isNotNull();
+    Assertions.assertThat(jsonMatchExpected(record.value())).isTrue();
   }
 
-  @Ignore
   @Test
-  public void testProcessHtmlFromParser() throws IOException {
+  public void testProcessHtmlFromParser() throws InterruptedException {
     when(groovyInterpreter.extractRawData(anyString(), any(), anyString())).thenReturn("some");
     when(groovyInterpreter.shouldProcess(anyString(), any())).thenReturn(true);
 
     testable.processHtml(DataSourcesEnum.PARSE, webUrl, "");
 
     verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
-
     verify(groovyInterpreter).extractRawData(eq("test.source"), any(), anyString());
-
+    ConsumerRecord<String, String> record = kafkaLocal.getMessageFromTopic(IKafkaProducer.PRODUCER_TOPIC);
+    Assertions.assertThat(record).isNotNull();
+    Assertions.assertThat(jsonMatchExpected(record.value())).isTrue();
   }
 
 
-  @Ignore
   @Test
-  public void testProcessHtml_OldPublicationDate_NoImageLoading() throws IOException {
+  public void testProcessHtml_OldPublicationDate_NoImageLoading() throws InterruptedException {
 
     when(groovyInterpreter.extractRawData(eq("test.source"), any(), anyString()))
         .thenReturn("some text");
@@ -131,11 +137,14 @@ public class ContentProcessorImplTest {
     testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", null, null, null);
 
     verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
+    ConsumerRecord<String, String> record = kafkaLocal.getMessageFromTopic(IKafkaProducer.PRODUCER_TOPIC);
+    Assertions.assertThat(record).isNotNull();
+    Assertions.assertThat(jsonMatchExpected(record.value())).isTrue();
+
   }
 
-  @Ignore
   @Test
-  public void testProcessHtml_ShouldNotProcess() throws IOException {
+  public void testProcessHtml_ShouldNotProcess() throws InterruptedException {
     HashMap<String, Object> extrData = new HashMap<>();
     extrData.put(EXTR_KEY_IMAGE_URL, "image_url");
     extrData.put(EXTR_KEY_CONTENT, "test_contnt");
@@ -146,10 +155,11 @@ public class ContentProcessorImplTest {
     testable.processHtml(DataSourcesEnum.PARSE, webUrl, "", null, null, null);
 
     verify(groovyInterpreter).shouldProcess(eq("test.source"), any());
+    Assertions.assertThat(kafkaLocal.isNoMessages(IKafkaProducer.PRODUCER_TOPIC)).isTrue();
   }
-  @Ignore
+
   @Test
-  public void testShouldVisitWrongDomain() {
+  public void testShouldVisitWrongDomain() throws InterruptedException {
     when(groovyInterpreter.shouldVisit(anyString(), any())).thenReturn(true);
     testable.initialize("rambler.ru");
 
@@ -162,7 +172,6 @@ public class ContentProcessorImplTest {
     webUrl.setURL("https://www.rambler.ru/data/news/60691/");
 
     assertThat(testable.shouldVisit(DataSourcesEnum.PARSE, webUrl), is(true));
-
   }
 
 
@@ -196,6 +205,18 @@ public class ContentProcessorImplTest {
     }
 
 
+  }
+
+
+  private boolean jsonMatchExpected(String actualJson) {
+    String methodName = testName.getMethodName();
+    try {
+      String expectedJson = IOUtils.resourceToString(CLASSPATH_PREFIX + File.separator + methodName + ".json", Charset.defaultCharset());
+      JSONAssert.assertEquals(expectedJson, actualJson, JSONCompareMode.LENIENT);
+    } catch (Exception e) {
+      Assertions.fail(e.getMessage(), e);
+    }
+    return true;
   }
 
 }

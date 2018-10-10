@@ -1,0 +1,13 @@
+{
+  "event-type": "page-crawled-event",
+  "event-data": {
+    "publication_date": null,
+    "path": "/data/news/60691/",
+    "source": "bnkomi.ru",
+    "title": null,
+    "url": "https://www.bnkomi.ru/data/news/60691/",
+    "image_url": null,
+    "raw_content": "some",
+    "raw_content_size": 4
+  }
+}

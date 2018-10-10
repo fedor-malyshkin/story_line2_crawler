@@ -47,7 +47,7 @@ public class ContentProcessorImpl implements IContentProcessor {
 
   @Override
   public void processHtml(DataSourcesEnum dataSource, WebURL webURL, String content, String title,
-      Date publicationDate, String imageUrl) {
+                          Date publicationDate, String imageUrl) {
     // если ранне набрали ссылок в базу, то теперь можно дополнительно проверить с
     // актуальной версией скриптов - нужно ли посещать страницу
     if (!shouldProcess(dataSource, webURL)) {
