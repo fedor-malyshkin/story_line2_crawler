@@ -1,10 +1,15 @@
 package ru.nlp_project.story_line2.crawler.parser
 
-public class RecursiveScript1 {
+import ru.nlp_project.story_line2.crawler.parser.recursive_script2
+
+import groovy.transform.TypeChecked
+
+public class recursive_script1 {
   public static String source = "recursive_script1"
 
+  @TypeChecked
   def extractData(source, webUrl, html) {
-    println(RecursiveScript2.class)
+    println(recursive_script2.class)
     return [:]
   }
 
