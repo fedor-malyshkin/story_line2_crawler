@@ -55,10 +55,11 @@ public class ContentProcessorImpl implements IContentProcessor {
     }
 
     metricsManager.incrementPagesProcessed(dataSource, sourceName);
+
     String rawContent = groovyInterpreter.extractRawData(sourceName, webURL, content);
     if (null == rawContent) {
       metricsManager.incrementPagesEmpty(dataSource, sourceName);
-      log.debug("No content {}:{} ({})", sourceName, webURL.getPath(), webURL.getURL());
+      log.info("No content {}:{} ({})", sourceName, webURL.getPath(), webURL.getURL());
       return;
     }
 

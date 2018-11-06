@@ -17,7 +17,6 @@ import ru.nlp_project.story_line2.crawler.CrawlerConfigurationTest.TestClass;
 
 // WARN: for unknown reasons '@TestPropertySource' does not work with YAML
 @RunWith(SpringRunner.class)
-//@TestPropertySource("classpath:ru/nlp_project/story_line2/server_web/test_server_web_config.yml")
 @SpringBootTest()
 @ContextConfiguration(classes = TestClass.class)
 public class CrawlerConfigurationTest {

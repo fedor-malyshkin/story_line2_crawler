@@ -58,7 +58,7 @@ public class MetricsManagerImpl implements IMetricsManager {
     System.out.println(metricsConfiguration);
 
     slfjReporter = Slf4jReporter.forRegistry(metricRegistry)
-        .outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.server_web"))
+        .outputTo(LoggerFactory.getLogger("ru.nlp_project.story_line2.crawler"))
         .convertRatesTo(TimeUnit.SECONDS).convertDurationsTo(TimeUnit.MILLISECONDS).build();
     slfjReporter.start(metricsConfiguration.logReportingPeriod, TimeUnit.SECONDS);
 

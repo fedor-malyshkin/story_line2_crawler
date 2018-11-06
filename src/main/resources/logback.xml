@@ -10,7 +10,7 @@
     </encoder>
   </appender>
 
-  <logger name="ru.nlp_project.story_line2.crawler" level="DEBUG"/>
+  <logger name="ru.nlp_project.story_line2.crawler" level="INFO"/>
 
   <root level="WARN">
     <appender-ref ref="STDOUT"/>
