@@ -96,6 +96,7 @@ public class ContentProcessorImpl implements IContentProcessor {
                                                                 rawContent // raw content
       );
       kafkaProducer.writePageCrawledEvent(sourceName, objectToQueue);
+      log.info("To Kafka sent {}:{} ({})", sourceName, webURL.getPath(), webURL.getURL());
     } catch (Exception e) {
       log.error(e.getMessage(), e);
     }
