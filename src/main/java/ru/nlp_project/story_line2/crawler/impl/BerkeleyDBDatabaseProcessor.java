@@ -22,21 +22,39 @@ public class BerkeleyDBDatabaseProcessor implements IDatabaseProcessor {
   @Override
   public void initialize(String datastorePath) {
     try {
-      // Open the environment, creating one if it does not exist
-      EnvironmentConfig envConfig = new EnvironmentConfig();
-      envConfig.setAllowCreate(true);
-      Environment dbEnvironment = new Environment(new File(datastorePath),
-                                                  envConfig);
-
-      // Open the database, creating one if it does not exist
-      DatabaseConfig dbConfig = new DatabaseConfig();
-      dbConfig.setAllowCreate(true);
-      database = dbEnvironment.openDatabase(null,
-                                            "crawler", dbConfig);
+      initializeDirectory(datastorePath);
+      Environment dbEnvironment = initializeEnvironment(datastorePath);
+      initializeDatabase(dbEnvironment);
     } catch (DatabaseException e) {
       log.error("Exception in BerkeleyDB: {}", e.getMessage(), e);
       throw new IllegalStateException(e);
     }
+  }
+
+  private void initializeDirectory(String datastorePath) {
+    File file = new File(datastorePath);
+    if (file.exists() && !file.isDirectory()) {
+      throw new IllegalStateException(String.format("'%s' must be not file.", datastorePath));
+    }
+    if (!file.exists() && !file.mkdirs()) {
+      throw new IllegalStateException(String.format(" Cannot create '%s' dir.", datastorePath));
+    }
+  }
+
+  private void initializeDatabase(Environment dbEnvironment) throws DatabaseException {
+    // Open the database, creating one if it does not exist
+    DatabaseConfig dbConfig = new DatabaseConfig();
+    dbConfig.setAllowCreate(true);
+    database = dbEnvironment.openDatabase(null,
+                                          "crawler", dbConfig);
+  }
+
+  private Environment initializeEnvironment(String datastorePath) throws DatabaseException {
+    // Open the environment, creating one if it does not exist
+    EnvironmentConfig envConfig = new EnvironmentConfig();
+    envConfig.setAllowCreate(true);
+    return new Environment(new File(datastorePath),
+                           envConfig);
   }
 
   @Override

@@ -5,21 +5,22 @@ import static org.junit.Assert.*;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import org.junit.Test;
 
 public class DateTimeUtilsTest {
 
-  public Date getFixedDate() {
+  private Date getFixedDate() {
     GregorianCalendar gregorianCalendar = new GregorianCalendar();
-    gregorianCalendar.set(2017, 03, 22, 22, 21);
+    gregorianCalendar.set(2017, Calendar.APRIL, 22, 22, 21);
     Date date = gregorianCalendar.getTime();
     date.setSeconds(0);
     return date;
   }
 
-  public ZoneId getFixedZoneId() {
+  private ZoneId getFixedZoneId() {
     return DateTimeUtils.converToZoneId("+05:00");
   }
 

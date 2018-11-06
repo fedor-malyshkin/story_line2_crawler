@@ -1,7 +1,11 @@
 package ru.nlp_project.story_line2.crawler.impl;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.UUID;
+import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,6 +21,15 @@ public class BerkeleyDBDatabaseProcessorTest {
     String absolutePath = Files.createTempDirectory("berkeleyDB").toFile().getAbsolutePath();
     testable.initialize(absolutePath);
   }
+
+  @Test
+  public void testInitializeNotExistingDir() throws IOException {
+    testable = new BerkeleyDBDatabaseProcessor();
+    String absolutePath = FileUtils.getTempDirectoryPath() + File.separator + UUID.randomUUID();
+    testable.initialize(absolutePath);
+    testable.add("url");
+  }
+
 
   @Test
   public void test10000RecordsSuccess() {
