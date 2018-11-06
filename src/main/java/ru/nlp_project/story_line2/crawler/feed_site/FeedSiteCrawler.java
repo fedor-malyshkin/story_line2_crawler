@@ -5,35 +5,39 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import edu.uci.ics.crawler4j.url.WebURL;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
 import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
-import ru.nlp_project.story_line2.crawler.IGroovyInterpreter;
+import ru.nlp_project.story_line2.crawler.IDatabaseProcessor;
 
-public class FeedSiteCrawler {
+class FeedSiteCrawler {
 
+  private final CrawlerConfiguration crawlerConfiguration;
 
-  @Autowired
-  protected IGroovyInterpreter groovyInterpreter;
+  private final IDatabaseProcessor databaseProcessor;
 
-  private IContentProcessor contentProcessor;
+  private final IContentProcessor contentProcessor;
 
   private Logger log;
 
   private FeedSiteConfiguration siteConfig;
 
-  FeedSiteCrawler(FeedSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
+  FeedSiteCrawler(CrawlerConfiguration crawlerConfiguration, FeedSiteConfiguration siteConfig, IDatabaseProcessor databaseProcessor, IContentProcessor contentProcessor) {
+    this.crawlerConfiguration = crawlerConfiguration;
     this.siteConfig = siteConfig;
+    this.databaseProcessor = databaseProcessor;
     this.contentProcessor = contentProcessor;
 
     String loggerClass = String
@@ -45,7 +49,7 @@ public class FeedSiteCrawler {
   /**
    * Метод фактически выполняющий анализ и вызываемый на периодической основе.
    */
-  public void crawlFeed() {
+  void crawlFeed() {
     try {
       String feed = getFeed();
       parseFeed(feed);
@@ -57,11 +61,11 @@ public class FeedSiteCrawler {
 
   private String getFeed() throws IOException {
     InputStream inputStream = new URL(siteConfig.feed).openStream();
-    return IOUtils.toString(inputStream);
+    return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
   }
 
 
-  protected String getImageUrlFromEnclosures(List<SyndEnclosure> enclosures) {
+  private String getImageUrlFromEnclosures(List<SyndEnclosure> enclosures) {
     // gif|jpg|png|jpeg
     for (SyndEnclosure enc : enclosures) {
       if (enc.getType().matches("image/(gif|jpg|png|jpeg)")) {
@@ -73,11 +77,12 @@ public class FeedSiteCrawler {
 
 
   void initialize() {
+    databaseProcessor.initialize(crawlerConfiguration.crawlerStorageDir + File.separator + siteConfig.source);
     contentProcessor.initialize(siteConfig.source);
   }
 
 
-  protected void parseFeed(String feed) throws Exception {
+  void parseFeed(String feed) throws Exception {
     SyndFeedInput input = new SyndFeedInput();
     SyndFeed syndFeed = input.build(new StringReader(feed));
     for (SyndEntry entry : syndFeed.getEntries()) {
@@ -89,9 +94,11 @@ public class FeedSiteCrawler {
   private void processSyndEntry(SyndEntry entry) {
     Date publicationDate = entry.getPublishedDate();
     String title = entry.getTitle().trim();
-
     WebURL webURL = new WebURL();
     String uri = entry.getUri().trim();
+    if (databaseProcessor.contains(uri)) {
+      return;
+    }
     webURL.setURL(uri);
     if (!siteConfig.parseForContent) {
       String content = entry.getDescription().getValue();
@@ -100,6 +107,7 @@ public class FeedSiteCrawler {
         imageUrl = getImageUrlFromEnclosures(entry.getEnclosures());
       }
       contentProcessor.processHtml(DataSourcesEnum.RSS, webURL, content, title, publicationDate, imageUrl);
+      databaseProcessor.add(uri);
     } else {
       throw new IllegalStateException("NIE!");
     }

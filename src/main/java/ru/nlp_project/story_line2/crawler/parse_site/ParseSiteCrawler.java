@@ -17,8 +17,11 @@ import ru.nlp_project.story_line2.crawler.IContentProcessor.DataSourcesEnum;
 public class ParseSiteCrawler extends WebCrawler {
 
   private IContentProcessor contentProcessor;
+
   private ParseSiteConfiguration siteConfig;
+
   private WebURL seedWebURL;
+
   private WebURL seedWebURLCannoninicalized;
 
   ParseSiteCrawler(ParseSiteConfiguration siteConfig, IContentProcessor contentProcessor) {

@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Setter;
 import org.apache.commons.io.FileUtils;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
@@ -37,13 +38,23 @@ import ru.nlp_project.story_line2.crawler.IContentProcessor;
 public class ParseSiteController {
 
   // global controllers list for schedule processing
-  static Map<String, ParseSiteController> controllers = new HashMap<>();
-  private final IContentProcessor contentProcessor;
+  private static Map<String, ParseSiteController> controllers = new HashMap<>();
+
   @Autowired
+  @Setter
+  private IContentProcessor contentProcessor;
+
+  @Autowired
+  @Setter
   private Scheduler scheduler;
+
   @Autowired
+  @Setter
   private CrawlerConfiguration crawlerConfiguration;
+
   private ParseSiteConfiguration siteConfig;
+
+
   WebCrawlerFactory<ParseSiteCrawler> factory = new WebCrawlerFactory<ParseSiteCrawler>() {
     @Override
     public ParseSiteCrawler newInstance() throws Exception {
@@ -52,6 +63,7 @@ public class ParseSiteController {
       return result;
     }
   };
+
   private Logger logger;
 
   private CrawlController crawlController;
@@ -62,9 +74,8 @@ public class ParseSiteController {
 
   private JobKey jobKey;
 
-  public ParseSiteController(ParseSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
+  public ParseSiteController(ParseSiteConfiguration siteConfig) {
     this.siteConfig = siteConfig;
-    this.contentProcessor = contentProcessor;
     String loggerClass = String
         .format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
     this.logger = LoggerFactory.getLogger(loggerClass);
@@ -87,9 +98,9 @@ public class ParseSiteController {
     }
   }
 
-  private CrawlConfig createCrawlConfig(ParseSiteConfiguration site) {
+  private CrawlConfig createCrawlConfig() {
     String crawlStorageFolder =
-        crawlerConfiguration.crawlerStorageDir + File.separator + site.source;
+        crawlerConfiguration.crawlerStorageDir + File.separator + siteConfig.source;
 
     try {
       FileUtils.forceMkdir(new File(crawlStorageFolder));
@@ -140,7 +151,7 @@ public class ParseSiteController {
   }
 
   private void initializeCrawler() {
-    CrawlConfig crawlConfig = createCrawlConfig(siteConfig);
+    CrawlConfig crawlConfig = createCrawlConfig();
     try {
       crawlController = createCrawlController(crawlConfig, siteConfig);
     } catch (Exception e) {

@@ -26,6 +26,7 @@ import org.springframework.context.annotation.Scope;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.ParseSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.feed_site.FeedSiteController;
+import ru.nlp_project.story_line2.crawler.impl.BerkeleyDBDatabaseProcessor;
 import ru.nlp_project.story_line2.crawler.impl.ContentProcessorImpl;
 import ru.nlp_project.story_line2.crawler.impl.GroovyInterpreterImpl;
 import ru.nlp_project.story_line2.crawler.impl.KafkaProducerImpl;
@@ -41,7 +42,7 @@ import ru.nlp_project.story_line2.crawler.parse_site.ParseSiteController;
 public class CrawlerApplication {
 
   @Autowired
-  CrawlerConfiguration crawlerConfiguration;
+  private CrawlerConfiguration crawlerConfiguration;
 
   private List<ParseSiteController> parseSites;
 
@@ -70,7 +71,7 @@ public class CrawlerApplication {
 
   @Bean
   protected IMetricsManager metricsManager(CrawlerConfiguration configuration,
-      MetricRegistry metricRegistry) {
+                                           MetricRegistry metricRegistry) {
     IMetricsManager result = new MetricsManagerImpl(configuration, metricRegistry);
     result.initialize();
     return result;
@@ -103,21 +104,27 @@ public class CrawlerApplication {
     feedSites.forEach(FeedSiteController::stop);
   }
 
+
+  @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+  @Bean
+  IDatabaseProcessor databaseProcessor() {
+    return new BerkeleyDBDatabaseProcessor();
+  }
+
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   @Bean
   FeedSiteController feedSiteController(FeedSiteConfiguration siteConfiguration) {
-    return new FeedSiteController(siteConfiguration, contentProcessor());
+    return new FeedSiteController(siteConfiguration);
   }
 
 
   @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
   @Bean
   ParseSiteController parseSiteController(ParseSiteConfiguration siteConfiguration) {
-    return new ParseSiteController(siteConfiguration, contentProcessor());
+    return new ParseSiteController(siteConfiguration);
   }
 
-  private void initializeSites(
-      CrawlerConfiguration configuration) throws Exception {
+  private void initializeSites(CrawlerConfiguration configuration) {
     // parser_sites (created after dependency injections, but not initialized)
     parseSites = new ArrayList<>();
     if (null != configuration.parseSites) {

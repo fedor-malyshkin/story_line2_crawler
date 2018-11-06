@@ -6,6 +6,7 @@ import static org.quartz.TriggerBuilder.newTrigger;
 
 import java.util.HashMap;
 import java.util.Map;
+import lombok.Setter;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.CronTrigger;
 import org.quartz.DisallowConcurrentExecution;
@@ -23,16 +24,29 @@ import org.springframework.beans.factory.annotation.Autowired;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration;
 import ru.nlp_project.story_line2.crawler.CrawlerConfiguration.FeedSiteConfiguration;
 import ru.nlp_project.story_line2.crawler.IContentProcessor;
+import ru.nlp_project.story_line2.crawler.IDatabaseProcessor;
 
 public class FeedSiteController {
 
-  // global controllers list for shedule processing
+  // global controllers list for schedule processing
   private static Map<String, FeedSiteController> controllers = new HashMap<>();
-  private final IContentProcessor contentProcessor;
+
   @Autowired
+  @Setter
+  private IDatabaseProcessor databaseProcessor;
+
+  @Autowired
+  @Setter
+  private IContentProcessor contentProcessor;
+
+  @Autowired
+  @Setter
   protected Scheduler scheduler;
+
   @Autowired
+  @Setter
   protected CrawlerConfiguration crawlerConfiguration;
+
   private FeedSiteConfiguration siteConfig;
   private Logger logger;
   private JobDetail job;
@@ -41,9 +55,8 @@ public class FeedSiteController {
   private FeedSiteCrawler feedSiteCrawler;
 
 
-  public FeedSiteController(FeedSiteConfiguration siteConfig, IContentProcessor contentProcessor) {
+  public FeedSiteController(FeedSiteConfiguration siteConfig) {
     this.siteConfig = siteConfig;
-    this.contentProcessor = contentProcessor;
     String loggerClass = String
         .format("%s[%s]", this.getClass().getCanonicalName(), siteConfig.source);
     this.logger = LoggerFactory.getLogger(loggerClass);
@@ -51,7 +64,7 @@ public class FeedSiteController {
     controllers.put(siteConfig.source, this);
   }
 
-  public void executeSheduledJob(JobExecutionContext context) {
+  private void executeScheduledJob(JobExecutionContext context) {
     feedSiteCrawler.crawlFeed();
 
   }
@@ -62,7 +75,7 @@ public class FeedSiteController {
   }
 
   private void initializeFeedSiteCrawler() {
-    feedSiteCrawler = new FeedSiteCrawler(siteConfig, contentProcessor);
+    feedSiteCrawler = new FeedSiteCrawler(crawlerConfiguration, siteConfig, databaseProcessor, contentProcessor);
     feedSiteCrawler.initialize();
   }
 
@@ -111,7 +124,7 @@ public class FeedSiteController {
       FeedSiteController siteController = controllers.get(source);
       try {
         if (siteController != null) {
-          siteController.executeSheduledJob(context);
+          siteController.executeScheduledJob(context);
         }
       } catch (Exception e) {
         // do nothing in any case
